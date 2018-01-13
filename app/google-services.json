@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "125235332843",
+    "firebase_url": "https://disaster-managment.firebaseio.com",
+    "project_id": "disaster-managment",
+    "storage_bucket": "disaster-managment.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:125235332843:android:0d9ff59a5061e825",
+        "android_client_info": {
+          "package_name": "com.disastermanagment_vjc.www.disastermanagmentorganization"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "125235332843-vkp85t0kl8blmv32quq7gr48kivn986c.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.disastermanagment_vjc.www.disastermanagmentorganization",
+            "certificate_hash": "5d96b4045dd9d1b425673c6ed2945b0f6b80e15e"
+          }
+        },
+        {
+          "client_id": "125235332843-1t6jbmi09g8s79ak8h89onmdep1cjc71.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCJ8rFars0T39mi-3jce7gkmDChOcr3oxc"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "125235332843-1t6jbmi09g8s79ak8h89onmdep1cjc71.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
