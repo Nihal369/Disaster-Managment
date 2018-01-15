@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -29,6 +30,14 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import es.dmoral.toasty.Toasty;
 
@@ -41,6 +50,8 @@ public class Login extends AppCompatActivity {
     private static final int RC_SIGN_IN=2;
     GoogleApiClient mGoogleApiClient;
     FirebaseAuth.AuthStateListener mAuthListener;
+    private DatabaseReference mRootRef,unitRef,userRef;
+    Map<String, String> fireBaseMap;
 
     @Override
     protected void onStart() {
@@ -83,10 +94,12 @@ public class Login extends AppCompatActivity {
                         FirebaseUser user = firebaseAuth.getCurrentUser();
 
                         //Assign user details to LocalDB
+
                         LocalDB.setFullName(user.getDisplayName());
                         LocalDB.setEmailAddress(user.getEmail());
                         LocalDB.setPhoneNumber(user.getPhoneNumber());
                         LocalDB.setProfilePicUri(user.getPhotoUrl());
+                        readDataFromFirebase();
 
                         //Jump to appointment activity
                         Intent intent = new Intent(Login.this, MainActivity.class);
@@ -172,10 +185,12 @@ public class Login extends AppCompatActivity {
 
                             //Retrieve google account data and store it in LocalDB
                             assert user != null;
+
                             LocalDB.setFullName(user.getDisplayName());
                             LocalDB.setEmailAddress(user.getEmail());
                             LocalDB.setPhoneNumber(user.getPhoneNumber());
                             LocalDB.setProfilePicUri(user.getPhotoUrl());
+                            readDataFromFirebase();
 
 
                             //Continue user registration
@@ -201,6 +216,41 @@ public class Login extends AppCompatActivity {
         assert connectivityManager != null;
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
+    private void readDataFromFirebase()
+    {
+        mRootRef = FirebaseDatabase.getInstance().getReference();
+        unitRef = mRootRef.child("Units");
+        userRef=unitRef.child(LocalDB.getFullName());
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+
+                //Map that stores retrived data from the DataSnapshot
+                if(dataSnapshot!=null) {
+                    fireBaseMap = (HashMap<String, String>) dataSnapshot.getValue();
+                }
+
+
+                if(fireBaseMap!=null) {
+                    //Retrive data from the snapshot map
+                    for (String key : fireBaseMap.keySet()) {
+                        if(key.equals("unitType"))
+                        {
+                            LocalDB.setUnitType(fireBaseMap.get(key));
+                        }
+
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
     }
 
 }

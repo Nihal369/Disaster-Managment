@@ -85,6 +85,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                     public void onLocationUpdated(Location location) {
                         lattitude=location.getLatitude();
                         longitude=location.getLongitude();
+                        //TODO:UPDATE FIREBASE DATA
                         LatLng user=new LatLng(lattitude,longitude);
                         mMap.addMarker(new MarkerOptions().position(user).title(LocalDB.getFullName()));
                         mMap.moveCamera(CameraUpdateFactory.newLatLng(user));

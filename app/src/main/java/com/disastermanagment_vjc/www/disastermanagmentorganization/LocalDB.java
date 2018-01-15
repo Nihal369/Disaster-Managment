@@ -5,7 +5,7 @@ import android.net.Uri;
 
 public class LocalDB {
 
-    static String fullName,emailAddress,phoneNumber;
+    static String fullName,emailAddress,phoneNumber,unitType;
     static Uri profilePicUri;
 
     public static void setEmailAddress(String value) {
@@ -23,6 +23,14 @@ public class LocalDB {
 
     public static void setProfilePicUri(Uri value) {
         profilePicUri = value;
+    }
+
+    public static void setUnitType(String value) {
+        unitType = value;
+    }
+
+    public static String getUnitType() {
+        return unitType;
     }
 
     public static String getEmailAddress() {
