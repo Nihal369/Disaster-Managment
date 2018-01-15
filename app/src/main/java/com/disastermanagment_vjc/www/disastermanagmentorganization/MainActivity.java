@@ -16,6 +16,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DatabaseReference;
@@ -79,6 +80,11 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 .setDistance(trackingDistance)
                 .setInterval(mLocTrackingInterval);
 
+
+        //TODO:UPDATE USER'S INITAL POSITION
+        MarkerOptions markerOptions=new MarkerOptions().position(new LatLng(0,0)).title(LocalDB.getFullName());
+        final Marker marker=mMap.addMarker(markerOptions);
+
         SmartLocation.with(this)
                 .location()
                 .continuous()
@@ -90,7 +96,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                         longitude=location.getLongitude();
                         updateFirebaseData(latitude,longitude);
                         LatLng user=new LatLng(latitude,longitude);
-                        mMap.addMarker(new MarkerOptions().position(user).title(LocalDB.getFullName()));
+                        marker.setPosition(user);
                         mMap.moveCamera(CameraUpdateFactory.newLatLng(user));
                     }
                 });
