@@ -236,9 +236,20 @@ public class Login extends AppCompatActivity {
                 if(fireBaseMap!=null) {
                     //Retrive data from the snapshot map
                     for (String key : fireBaseMap.keySet()) {
-                        if(key.equals("unitType"))
+
+                        switch (key)
                         {
-                            LocalDB.setUnitType(fireBaseMap.get(key));
+                            case "unitType":
+                                LocalDB.setUnitType(fireBaseMap.get(key));
+                                break;
+                            //TODO:CHECK THE RETURN VALUE
+                            case "lat":
+                                LocalDB.setLattitude(String.valueOf(fireBaseMap.get(key)));
+                                break;
+
+                            case "ln":
+                                LocalDB.setLongitude(String.valueOf(fireBaseMap.get(key)));
+                                break;
                         }
 
                     }

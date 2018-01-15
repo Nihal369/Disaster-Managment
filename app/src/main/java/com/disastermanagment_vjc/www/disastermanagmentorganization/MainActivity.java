@@ -81,8 +81,8 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 .setInterval(mLocTrackingInterval);
 
 
-        //TODO:UPDATE USER'S INITAL POSITION
-        MarkerOptions markerOptions=new MarkerOptions().position(new LatLng(0,0)).title(LocalDB.getFullName());
+
+        MarkerOptions markerOptions=new MarkerOptions().position(new LatLng(LocalDB.getLattitude(),LocalDB.getLongitude())).title(LocalDB.getFullName());
         final Marker marker=mMap.addMarker(markerOptions);
 
         SmartLocation.with(this)
