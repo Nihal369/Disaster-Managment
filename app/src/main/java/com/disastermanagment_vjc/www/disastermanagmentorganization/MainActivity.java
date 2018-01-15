@@ -18,6 +18,8 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import io.nlopez.smartlocation.OnLocationUpdatedListener;
 import io.nlopez.smartlocation.SmartLocation;
@@ -29,7 +31,8 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleMap mMap;
     private FusedLocationProviderClient mFusedLocationClient;
     private int MY_PERMISSIONS_REQUEST_FINE_LOCATION;
-    private double lattitude,longitude;
+    private double latitude,longitude;
+    private DatabaseReference mRootRef,unitRef,userRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,14 +86,35 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 .start(new OnLocationUpdatedListener() {
                     @Override
                     public void onLocationUpdated(Location location) {
-                        lattitude=location.getLatitude();
+                        latitude=location.getLatitude();
                         longitude=location.getLongitude();
-                        //TODO:UPDATE FIREBASE DATA
-                        LatLng user=new LatLng(lattitude,longitude);
+                        updateFirebaseData(latitude,longitude);
+                        LatLng user=new LatLng(latitude,longitude);
                         mMap.addMarker(new MarkerOptions().position(user).title(LocalDB.getFullName()));
                         mMap.moveCamera(CameraUpdateFactory.newLatLng(user));
                     }
                 });
+        }
+
+        private void updateFirebaseData(double lat,double lng)
+        {
+            try
+            {
+                getFirebaseReference();
+                userRef.child("lat").setValue(lat);
+                userRef.child("ln").setValue(lng);
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+        }
+
+        private void getFirebaseReference()
+        {
+            mRootRef = FirebaseDatabase.getInstance().getReference();
+            unitRef = mRootRef.child("Units");
+            userRef=unitRef.child(LocalDB.getFullName());
         }
 
 
