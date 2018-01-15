@@ -19,6 +19,11 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
 
+import io.nlopez.smartlocation.OnLocationUpdatedListener;
+import io.nlopez.smartlocation.SmartLocation;
+import io.nlopez.smartlocation.location.config.LocationAccuracy;
+import io.nlopez.smartlocation.location.config.LocationParams;
+
 public class MainActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
@@ -49,36 +54,43 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
+            mMap = googleMap;
 
-        // Add a marker in Sydney and move the camera
-        /*LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));*/
+            // Add a marker in Sydney and move the camera
+            /*LatLng sydney = new LatLng(-34, 151);
+            mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));*/
 
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    ActivityCompat.requestPermissions(this,
-                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                            MY_PERMISSIONS_REQUEST_FINE_LOCATION);
+            if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                        ActivityCompat.requestPermissions(this,
+                                new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                                MY_PERMISSIONS_REQUEST_FINE_LOCATION);
+                }
 
-                    return;
-            }
+        long mLocTrackingInterval = 1000 * 5; // 5 sec
+        float trackingDistance = 0;
+        LocationAccuracy trackingAccuracy = LocationAccuracy.HIGH;
 
-            mFusedLocationClient.getLastLocation()
-                    .addOnSuccessListener(this, new OnSuccessListener<Location>() {
-                        @Override
-                        public void onSuccess(Location location) {
-                            // Got last known location. In some rare situations this can be null.
-                            if (location != null) {
-                                // Logic to handle location object
-                                lattitude=location.getLatitude();
-                                longitude=location.getLongitude();
-                                LatLng userLatLng=new LatLng(lattitude,longitude);
-                                mMap.addMarker(new MarkerOptions().position(userLatLng).title(LocalDB.getFullName()));
-                                mMap.moveCamera(CameraUpdateFactory.newLatLng(userLatLng));
-                            }
-                        }
-                    });
+        LocationParams.Builder builder = new LocationParams.Builder()
+                .setAccuracy(trackingAccuracy)
+                .setDistance(trackingDistance)
+                .setInterval(mLocTrackingInterval);
+
+        SmartLocation.with(this)
+                .location()
+                .continuous()
+                .config(builder.build())
+                .start(new OnLocationUpdatedListener() {
+                    @Override
+                    public void onLocationUpdated(Location location) {
+                        lattitude=location.getLatitude();
+                        longitude=location.getLongitude();
+                        LatLng user=new LatLng(lattitude,longitude);
+                        mMap.addMarker(new MarkerOptions().position(user).title(LocalDB.getFullName()));
+                        mMap.moveCamera(CameraUpdateFactory.newLatLng(user));
+                    }
+                });
         }
+
+
 }
