@@ -15,6 +15,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -191,7 +192,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                     fireBaseMap = (HashMap<String, String>) dataSnapshot.getValue();
                 }
 
-                Log.i("NIHAL",fireBaseMap.toString());
                 if(fireBaseMap!=null) {
 
                     //Retrieve data from the snapshot map
@@ -216,10 +216,11 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                         }
                         else if(!key.equals(LocalDB.getFullName()))
                         {
+                            BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(getIconPathFromDrawable(subMap.get("unitType")));
                             Marker usersMarker = mMap.addMarker(new MarkerOptions()
                                     .position(new LatLng(Double.parseDouble(subMap.get("lat")), Double.parseDouble(subMap.get("ln"))))
                                     .title(key)
-                                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN)));
+                                    .icon(icon));
 
                             usersMarkersMap.put(key, usersMarker);
                         }
@@ -233,5 +234,17 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
 
+    }
+
+    private int getIconPathFromDrawable(String value)
+    {
+        switch (value)
+        {
+            case "ambulance":return R.drawable.ambulance;
+            case "firefighter":return R.drawable.firetruck;
+            case "rescuer":return R.drawable.rescuer;
+            case "victim":return R.drawable.victim;
+        }
+        return R.drawable.rescuer;
     }
 }
