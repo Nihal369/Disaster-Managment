@@ -15,6 +15,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -132,7 +133,8 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
 
             //Customising the marker
-            MarkerOptions markerOptions=new MarkerOptions().position(new LatLng(initalLat,initalLng)).title(LocalDB.getFullName());
+            BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(getDrawablePathIcon(LocalDB.getUnitType()));
+            MarkerOptions markerOptions=new MarkerOptions().position(new LatLng(initalLat,initalLng)).title(LocalDB.getFullName()).icon(icon);
             final Marker marker=mMap.addMarker(markerOptions);
 
             //SmartLocation Object tracks the position of the user accurately
@@ -216,10 +218,11 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                             }
                             else if(!key.equals(LocalDB.getFullName()))
                             {
+                                BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(getDrawablePathIcon(subMap.get("unitType")));
                                 Marker usersMarker = mMap.addMarker(new MarkerOptions()
                                         .position(new LatLng(Double.parseDouble(subMap.get("lat")), Double.parseDouble(subMap.get("ln"))))
                                         .title(key)
-                                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN)));
+                                        .icon(icon));
 
                                 usersMarkersMap.put(key, usersMarker);
                             }
@@ -233,5 +236,17 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 }
             });
 
+        }
+
+        private int getDrawablePathIcon(String unitTypeValue)
+        {
+            switch (unitTypeValue)
+            {
+                case "firefighter":return R.drawable.firetruck;
+                case "ambulance":return  R.drawable.ambulance;
+                case "rescuer":return R.drawable.rescuer;
+                case "victim": return R.drawable.victim;
+            }
+            return R.drawable.logo;
         }
 }
