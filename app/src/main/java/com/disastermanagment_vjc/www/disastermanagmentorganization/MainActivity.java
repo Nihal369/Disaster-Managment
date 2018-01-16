@@ -7,6 +7,7 @@ import android.location.Location;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -18,8 +19,14 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import io.nlopez.smartlocation.OnLocationUpdatedListener;
 import io.nlopez.smartlocation.SmartLocation;
@@ -34,30 +41,20 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     private int MY_PERMISSIONS_REQUEST_FINE_LOCATION;
     private double initalLat,initalLng,latitude,longitude;
     private DatabaseReference mRootRef,unitRef,userRef;
+    Map<String,String> fireBaseMap;
 
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        //Function Objective:Load the layout and set initial things
-        requestPermissionFromUser();
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
-    }
-
-
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            //Function Objective:Load the layout and set initial things
+            requestPermissionFromUser();
+            super.onCreate(savedInstanceState);
+            setContentView(R.layout.activity_main);
+            // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+            SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                    .findFragmentById(R.id.map);
+            mapFragment.getMapAsync(this);
+        }
 
         @SuppressLint("MissingPermission")
         @Override
@@ -75,6 +72,8 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
                     //Update the user position periodically both on map and on firebase
                     updateUserLocation();
+
+                    readDataFromFirebase();
                 }
                 catch (Exception e)
                 {
@@ -172,5 +171,48 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             mRootRef = FirebaseDatabase.getInstance().getReference();
             unitRef = mRootRef.child("Units");
             userRef=unitRef.child(LocalDB.getFullName());
+        }
+
+        private void readDataFromFirebase()
+        {
+            //Function Objective:Reads the data like unitType from firebase
+            getFirebaseReference();
+
+            unitRef.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+
+                    //Map that stores retrived data from the DataSnapshot
+                    if(dataSnapshot!=null) {
+                        fireBaseMap = (HashMap<String, String>) dataSnapshot.getValue();
+                    }
+
+                    Log.i("NIHAL",fireBaseMap.toString());
+                    if(fireBaseMap!=null) {
+                        //Retrieve data from the snapshot map
+                        for (String key : fireBaseMap.keySet()) {
+
+                            String value = String.valueOf(fireBaseMap.get(key));
+                            value = value.substring(1, value.length()-1);           //remove curly brackets
+                            String[] keyValuePairs = value.split(",");              //split the string to create key-value pairs
+                            Map<String,String> subMap = new HashMap<>();
+
+                            for(String pair : keyValuePairs)                        //iterate over the pairs
+                            {
+                                String[] entry = pair.split("=");                   //split the pairs to get key and value
+                                subMap.put(entry[0].trim(), entry[1].trim());          //add them to the hashmap and trim whitespaces
+                            }
+
+                            //TODO:UPDATE MARKERS ON MAP
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+            });
+
         }
 }
