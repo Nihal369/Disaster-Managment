@@ -79,6 +79,8 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
             //Read the database to get information about rest of the units
             readDataFromFirebase();
+
+            //TODO:IMPLEMENT USER SPECIFIC FUNCTIONS
         }
         catch (Exception e)
         {
@@ -130,11 +132,8 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 .setDistance(trackingDistance)
                 .setInterval(mLocTrackingInterval);
 
-
-
-        //Customising the marker
-        MarkerOptions markerOptions=new MarkerOptions().position(new LatLng(initalLat,initalLng)).title(LocalDB.getFullName());
-        final Marker marker=mMap.addMarker(markerOptions);
+        //Update the initial position to firebase
+        updateFirebaseData(initalLat,initalLng);
 
         //SmartLocation Object tracks the position of the user accurately
         SmartLocation.with(this)
@@ -147,10 +146,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                         latitude=location.getLatitude();
                         longitude=location.getLongitude();
                         updateFirebaseData(latitude,longitude);
-                        //Create a new user coordinate object
-                        LatLng userCoordinates=new LatLng(latitude,longitude);
-                        marker.setPosition(userCoordinates);
-                        mMap.moveCamera(CameraUpdateFactory.newLatLng(userCoordinates));
                     }
                 });
     }
@@ -193,10 +188,13 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 }
 
                 if(fireBaseMap!=null) {
+                    //firebase map eg{NAME={lat=0,ln=0,unitType=rescuer},NAME2........}
 
                     //Retrieve data from the snapshot map
                     for (String key : fireBaseMap.keySet()) {
 
+                        //Split the value string into a hashmap
+                        //Eg:{lat:0,ln:0,unitType:rescuer} is split into a hashmap
                         String value = String.valueOf(fireBaseMap.get(key));
                         value = value.substring(1, value.length()-1);           //remove curly brackets
                         String[] keyValuePairs = value.split(",");              //split the string to create key-value pairs
@@ -211,11 +209,14 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                         //UPDATE MARKERS ON MAP
                         if(usersMarkersMap.containsKey(key))
                         {
+                            //If the current user's marker existed previously then we only need to update it rather create another marker which leads to 2 markers for a single user
                             Marker marker = usersMarkersMap.get(key);
                             marker.setPosition(new LatLng(Double.parseDouble(subMap.get("lat")), Double.parseDouble(subMap.get("ln")))); // Update your marker
                         }
-                        else if(!key.equals(LocalDB.getFullName()))
+                        else
                         {
+                            //If the marker for a user doesnt exist,we need to create a new one
+                            //We cant directly give an image as a marker,we need to convert it into a bitmap icon.
                             BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(getIconPathFromDrawable(subMap.get("unitType")));
                             Marker usersMarker = mMap.addMarker(new MarkerOptions()
                                     .position(new LatLng(Double.parseDouble(subMap.get("lat")), Double.parseDouble(subMap.get("ln"))))
@@ -238,6 +239,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
     private int getIconPathFromDrawable(String value)
     {
+        //Function Objective:Return the image path for the corresponding unitType
         switch (value)
         {
             case "ambulance":return R.drawable.ambulance;
