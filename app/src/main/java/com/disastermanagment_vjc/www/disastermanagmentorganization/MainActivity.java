@@ -15,6 +15,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -42,12 +43,14 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     private double initalLat,initalLng,latitude,longitude;
     private DatabaseReference mRootRef,unitRef,userRef;
     Map<String,String> fireBaseMap;
+    Map<String,Marker>usersMarkersMap;
 
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             //Function Objective:Load the layout and set initial things
             requestPermissionFromUser();
+            usersMarkersMap=new HashMap<>();
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_main);
             // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -73,6 +76,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                     //Update the user position periodically both on map and on firebase
                     updateUserLocation();
 
+                    //Read the database to get information about rest of the units
                     readDataFromFirebase();
                 }
                 catch (Exception e)
@@ -189,6 +193,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
                     Log.i("NIHAL",fireBaseMap.toString());
                     if(fireBaseMap!=null) {
+
                         //Retrieve data from the snapshot map
                         for (String key : fireBaseMap.keySet()) {
 
@@ -203,7 +208,21 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                                 subMap.put(entry[0].trim(), entry[1].trim());          //add them to the hashmap and trim whitespaces
                             }
 
-                            //TODO:UPDATE MARKERS ON MAP
+                            //UPDATE MARKERS ON MAP
+                            if(usersMarkersMap.containsKey(key))
+                            {
+                                Marker marker = usersMarkersMap.get(key);
+                                marker.setPosition(new LatLng(Double.parseDouble(subMap.get("lat")), Double.parseDouble(subMap.get("ln")))); // Update your marker
+                            }
+                            else if(!key.equals(LocalDB.getFullName()))
+                            {
+                                Marker usersMarker = mMap.addMarker(new MarkerOptions()
+                                        .position(new LatLng(Double.parseDouble(subMap.get("lat")), Double.parseDouble(subMap.get("ln"))))
+                                        .title(key)
+                                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN)));
+
+                                usersMarkersMap.put(key, usersMarker);
+                            }
                         }
                     }
                 }
