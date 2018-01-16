@@ -2,6 +2,7 @@ package com.disastermanagment_vjc.www.disastermanagmentorganization;
 
 import android.*;
 import android.Manifest;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.support.v4.app.ActivityCompat;
@@ -32,7 +33,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleMap mMap;
     private FusedLocationProviderClient mFusedLocationClient;
     private int MY_PERMISSIONS_REQUEST_FINE_LOCATION;
-    private double latitude,longitude;
+    private double initalLat,initalLng,latitude,longitude;
     private DatabaseReference mRootRef,unitRef,userRef;
 
     @Override
@@ -44,6 +45,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
     }
+
 
 
     /**
@@ -71,6 +73,21 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                                 MY_PERMISSIONS_REQUEST_FINE_LOCATION);
                 }
 
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        mFusedLocationClient.getLastLocation()
+                .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                    @Override
+                    public void onSuccess(Location location) {
+                        // Got last known location. In some rare situations this can be null.
+                        if (location != null) {
+                            // Logic to handle location object
+                            initalLat=location.getLatitude();
+                            initalLng=location.getLongitude();
+                        }
+
+                    }
+                });
+
         long mLocTrackingInterval = 1000 * 5; // 5 sec
         float trackingDistance = 0;
         LocationAccuracy trackingAccuracy = LocationAccuracy.HIGH;
@@ -82,7 +99,8 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
 
 
-        MarkerOptions markerOptions=new MarkerOptions().position(new LatLng(LocalDB.getLattitude(),LocalDB.getLongitude())).title(LocalDB.getFullName());
+
+        MarkerOptions markerOptions=new MarkerOptions().position(new LatLng(initalLat,initalLng)).title(LocalDB.getFullName());
         final Marker marker=mMap.addMarker(markerOptions);
 
         SmartLocation.with(this)
@@ -122,6 +140,4 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             unitRef = mRootRef.child("Units");
             userRef=unitRef.child(LocalDB.getFullName());
         }
-
-
 }

@@ -2,6 +2,7 @@ package com.disastermanagment_vjc.www.disastermanagmentorganization;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -242,14 +243,6 @@ public class Login extends AppCompatActivity {
                             case "unitType":
                                 LocalDB.setUnitType(fireBaseMap.get(key));
                                 break;
-                            //TODO:CHECK THE RETURN VALUE
-                            case "lat":
-                                LocalDB.setLattitude(String.valueOf(fireBaseMap.get(key)));
-                                break;
-
-                            case "ln":
-                                LocalDB.setLongitude(String.valueOf(fireBaseMap.get(key)));
-                                break;
                         }
 
                     }
@@ -263,5 +256,7 @@ public class Login extends AppCompatActivity {
         });
 
     }
+
+
 
 }
