@@ -1,11 +1,14 @@
 package com.disastermanagment_vjc.www.disastermanagmentorganization;
 
+import android.*;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -51,6 +54,7 @@ public class Login extends AppCompatActivity {
     FirebaseAuth.AuthStateListener mAuthListener;
     private DatabaseReference mRootRef,unitRef,userRef;
     Map<String, String> fireBaseMap;
+    int MY_PERMISSIONS_REQUEST_FINE_LOCATION;
 
 
 
@@ -78,7 +82,7 @@ public class Login extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-
+        requestPermissionFromUser();
         if (isNetworkAvailable()) {
             //Assign the buttons and text in the layout to an Object in the program
             googleSignInButton = findViewById(R.id.googleSignInButton);
@@ -295,6 +299,15 @@ public class Login extends AppCompatActivity {
         mRootRef = FirebaseDatabase.getInstance().getReference();
         unitRef = mRootRef.child("Units");
         userRef=unitRef.child(LocalDB.getFullName());
+    }
+
+    private void requestPermissionFromUser(){
+        //Function Objective:Request location permission from the user
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                    MY_PERMISSIONS_REQUEST_FINE_LOCATION);
+        }
     }
 
 }

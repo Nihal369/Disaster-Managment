@@ -39,6 +39,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         //Function Objective:Load the layout and set initial things
+        requestPermissionFromUser();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -68,11 +69,17 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 //Request the permission to access location from the user
                 requestPermissionFromUser();
 
-                //Get the last known location in the user's device
-                getInitialLocationOfUser();
+                try {
+                    //Get the last known location in the user's device
+                    getInitialLocationOfUser();
 
-                //Update the user position periodically both on map and on firebase
-                updateUserLocation();
+                    //Update the user position periodically both on map and on firebase
+                    updateUserLocation();
+                }
+                catch (Exception e)
+                {
+                    requestPermissionFromUser();
+                }
             }
 
         private void requestPermissionFromUser(){

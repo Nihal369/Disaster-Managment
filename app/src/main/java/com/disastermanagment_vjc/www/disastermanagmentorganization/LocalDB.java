@@ -1,10 +1,7 @@
 package com.disastermanagment_vjc.www.disastermanagmentorganization;
 
-
-import android.content.SharedPreferences;
 import android.net.Uri;
 
-import static android.content.Context.MODE_PRIVATE;
 
 public class LocalDB {
 
@@ -20,8 +17,6 @@ public class LocalDB {
         value=value.toUpperCase();
         fullName = value;
     }
-
-
 
     public static void setPhoneNumber(String value) {
         phoneNumber = value;
