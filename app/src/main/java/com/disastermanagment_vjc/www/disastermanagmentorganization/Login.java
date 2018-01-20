@@ -12,6 +12,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -55,6 +56,7 @@ public class Login extends AppCompatActivity {
     private DatabaseReference mRootRef,unitRef,userRef;
     Map<String, String> fireBaseMap;
     int MY_PERMISSIONS_REQUEST_FINE_LOCATION;
+    RelativeLayout splashLayout;
 
 
 
@@ -67,6 +69,7 @@ public class Login extends AppCompatActivity {
         //Add a listener to check for a google account during app start
         if(isNetworkAvailable()) {
             firebaseAuth.addAuthStateListener(mAuthListener);
+            splashLayout=findViewById(R.id.splashLayout);
         }
         else
         {
@@ -123,6 +126,10 @@ public class Login extends AppCompatActivity {
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 //If there exists a signed in user
                 if (firebaseAuth.getCurrentUser() != null) {
+
+                    //Set splash layout so that firebase data is retrieved
+                    splashLayout.setVisibility(View.VISIBLE);
+
                     //User has already logged in,Jump to Main activity
                     FirebaseUser user = firebaseAuth.getCurrentUser();
 
@@ -133,8 +140,7 @@ public class Login extends AppCompatActivity {
                     //Get details from firebase like unitType which is not present in Google Account
                     readDataFromFirebase();
 
-                    //Jump to Main activity
-                   jumpToMainActivity();
+
                 }
             }
         };
@@ -192,6 +198,8 @@ public class Login extends AppCompatActivity {
                         {
                             case "unitType":
                                 LocalDB.setUnitType(fireBaseMap.get(key));
+                                //Jump to MainActivity since unitType is retrieved successfully from Firebase
+                                jumpToMainActivity();
                                 break;
                         }
 
@@ -268,8 +276,8 @@ public class Login extends AppCompatActivity {
                             assignDetailsToLocalDB(user);
 
 
-                            //Move to MainActivity
-                            jumpToMainActivity();
+                            //Read data from firebase and move to MainActivity
+                            readDataFromFirebase();
                         }
                         else {
                             // If sign in fails, display a message to the user.

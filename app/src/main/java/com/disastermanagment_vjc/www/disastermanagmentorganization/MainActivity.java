@@ -144,7 +144,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 .setInterval(mLocTrackingInterval);
 
         //Update the initial position to firebase
-        updateFirebaseData(initalLat,initalLng);
+        updateFirebaseData(initalLat,initalLng,LocalDB.getUnitType());
 
         //SmartLocation Object tracks the position of the user accurately
         SmartLocation.with(this)
@@ -156,12 +156,12 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                     public void onLocationUpdated(Location location) {
                         latitude=location.getLatitude();
                         longitude=location.getLongitude();
-                        updateFirebaseData(latitude,longitude);
+                        updateFirebaseData(latitude,longitude,LocalDB.getUnitType());
                     }
                 });
     }
 
-    private void updateFirebaseData(double latValue,double lngValue)
+    private void updateFirebaseData(double latValue,double lngValue,String unitTypeValue)
     {
         //Function Objective:Update the coordinates on the firebase real-time database
         try
@@ -169,6 +169,8 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             getFirebaseReference();
             userRef.child("lat").setValue(latValue);
             userRef.child("ln").setValue(lngValue);
+            assert unitTypeValue!=null;
+            userRef.child("unitType").setValue(LocalDB.getUnitType());
         }
         catch (Exception e)
         {
