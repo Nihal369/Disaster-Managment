@@ -2,16 +2,20 @@ package com.disastermanagment_vjc.www.disastermanagmentorganization;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -80,7 +84,9 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             //Read the database to get information about rest of the units
             readDataFromFirebase();
 
-            //TODO:IMPLEMENT USER SPECIFIC FUNCTIONS
+            //Select the appropriate module to be executed according to unitType
+            implementUnitType();
+
         }
         catch (Exception e)
         {
@@ -248,5 +254,46 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             case "victim":return R.drawable.victim;
         }
         return R.drawable.rescuer;
+    }
+
+    private void implementUnitType()
+    {
+        switch (LocalDB.getUnitType())
+        {
+            case "firefighter":firefighter();
+            break;
+            case "ambulance":ambulance();
+            break;
+            case "rescuer":rescuer();
+            break;
+            default:rescuer();
+        }
+    }
+
+    private void firefighter()
+    {
+        //TODO:COMPLETE FIREFIGHTER MODULE
+    }
+
+    private void ambulance()
+    {
+        //TODO:COMPLETE AMBULANCE MODULE
+    }
+
+    private void rescuer()
+    {
+        //TODO:COMPLETE RESCUER MODULE
+        mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+            @Override
+            public void onMapLongClick(LatLng latLng) {
+                showAlertDialog();
+            }
+        });
+    }
+
+    private void showAlertDialog()
+    {
+
+
     }
 }
