@@ -8,6 +8,7 @@ import android.location.Location;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v7.widget.CardView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -49,15 +50,19 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     private DatabaseReference mRootRef,unitRef,userRef;
     Map<String,String> fireBaseMap;
     Map<String,Marker>usersMarkersMap;
+    CardView rescuerCard;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         //Function Objective:Load the layout and set initial things
-        requestPermissionFromUser();
-        usersMarkersMap=new HashMap<>();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        requestPermissionFromUser();
+        usersMarkersMap=new HashMap<>();
+
+        rescuerCard=findViewById(R.id.rescuerCard);
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -156,14 +161,14 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 });
     }
 
-    private void updateFirebaseData(double lat,double lng)
+    private void updateFirebaseData(double latValue,double lngValue)
     {
         //Function Objective:Update the coordinates on the firebase real-time database
         try
         {
             getFirebaseReference();
-            userRef.child("lat").setValue(lat);
-            userRef.child("ln").setValue(lng);
+            userRef.child("lat").setValue(latValue);
+            userRef.child("ln").setValue(lngValue);
         }
         catch (Exception e)
         {
@@ -251,13 +256,18 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             case "ambulance":return R.drawable.ambulance;
             case "firefighter":return R.drawable.firetruck;
             case "rescuer":return R.drawable.rescuer;
-            case "victim":return R.drawable.victim;
+            case "victimDeceased":return R.drawable.victimdeceased;
+            case "victimCritical":return R.drawable.victimcritical;
+            case "victimInjured":return R.drawable.victiminjured;
+            case "victimFine":return R.drawable.victimfine;
         }
         return R.drawable.rescuer;
     }
 
     private void implementUnitType()
     {
+        Log.i("SUPERMAN","fuck");
+        Log.i("SUPERMAN",LocalDB.getUnitType());
         switch (LocalDB.getUnitType())
         {
             case "firefighter":firefighter();
@@ -282,10 +292,12 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void rescuer()
     {
+        Log.i("SUPERMAN","RESCUER");
         //TODO:COMPLETE RESCUER MODULE
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(LatLng latLng) {
+                Log.i("NIHAL","HELLO");
                 showAlertDialog();
             }
         });
@@ -293,7 +305,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void showAlertDialog()
     {
-
-
+        rescuerCard.setVisibility(View.VISIBLE);
     }
 }
