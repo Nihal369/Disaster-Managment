@@ -58,7 +58,8 @@
                             android:id="@+id/deceasedButton"
                             android:layout_width="55dp"
                             android:layout_height="55dp"
-                            android:src="@drawable/victimdeceased"
+                            android:src="@drawable/victimdeceasedbig"
+                            android:onClick="setVictim"
                             />
 
                         <TextView
@@ -85,7 +86,8 @@
                             android:id="@+id/criticalButton"
                             android:layout_width="55dp"
                             android:layout_height="55dp"
-                            android:src="@drawable/victimcritical"
+                            android:src="@drawable/victimcriticalbig"
+                            android:onClick="setVictim"
                             />
                         <TextView
                             android:layout_width="wrap_content"
@@ -109,7 +111,8 @@
                             android:id="@+id/injuredButton"
                             android:layout_width="55dp"
                             android:layout_height="55dp"
-                            android:src="@drawable/victiminjured"
+                            android:src="@drawable/victiminjuredbig"
+                            android:onClick="setVictim"
                             />
                         <TextView
                             android:layout_width="wrap_content"
@@ -133,7 +136,8 @@
                             android:id="@+id/fineButton"
                             android:layout_width="55dp"
                             android:layout_height="55dp"
-                            android:src="@drawable/victimfine"
+                            android:src="@drawable/victimfinebig"
+                            android:onClick="setVictim"
                             />
                         <TextView
                             android:layout_width="wrap_content"

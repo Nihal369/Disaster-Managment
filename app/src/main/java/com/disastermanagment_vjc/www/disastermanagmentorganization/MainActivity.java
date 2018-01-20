@@ -34,6 +34,7 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 import io.nlopez.smartlocation.OnLocationUpdatedListener;
 import io.nlopez.smartlocation.SmartLocation;
@@ -51,6 +52,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     Map<String,String> fireBaseMap;
     Map<String,Marker>usersMarkersMap;
     CardView rescuerCard;
+    LatLng victimLatLng;
 
 
     @Override
@@ -170,7 +172,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             userRef.child("lat").setValue(latValue);
             userRef.child("ln").setValue(lngValue);
             assert unitTypeValue!=null;
-            userRef.child("unitType").setValue(LocalDB.getUnitType());
+            userRef.child("unitType").setValue(unitTypeValue);
         }
         catch (Exception e)
         {
@@ -191,85 +193,92 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         //Function Objective:Reads the data like unitType from firebase
         getFirebaseReference();
 
-        unitRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
+            unitRef.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
 
-                //Map that stores retrived data from the DataSnapshot
-                if(dataSnapshot!=null) {
-                    fireBaseMap = (HashMap<String, String>) dataSnapshot.getValue();
-                }
+                    //Map that stores retrived data from the DataSnapshot
+                    if (dataSnapshot != null) {
+                        fireBaseMap = (HashMap<String, String>) dataSnapshot.getValue();
+                    }
 
-                if(fireBaseMap!=null) {
-                    //firebase map eg{NAME={lat=0,ln=0,unitType=rescuer},NAME2........}
+                    if (fireBaseMap != null) {
+                        //firebase map eg{NAME={lat=0,ln=0,unitType=rescuer},NAME2........}
 
-                    //Retrieve data from the snapshot map
-                    for (String key : fireBaseMap.keySet()) {
+                        //Retrieve data from the snapshot map
+                        for (String key : fireBaseMap.keySet()) {
 
-                        //Split the value string into a hashmap
-                        //Eg:{lat:0,ln:0,unitType:rescuer} is split into a hashmap
-                        String value = String.valueOf(fireBaseMap.get(key));
-                        value = value.substring(1, value.length()-1);           //remove curly brackets
-                        String[] keyValuePairs = value.split(",");              //split the string to create key-value pairs
-                        Map<String,String> subMap = new HashMap<>();
+                            //Split the value string into a hashmap
+                            //Eg:{lat:0,ln:0,unitType:rescuer} is split into a hashmap
+                            String value = String.valueOf(fireBaseMap.get(key));
+                                value = value.substring(1, value.length() - 1);           //remove curly brackets
+                                String[] keyValuePairs = value.split(",");              //split the string to create key-value pairs
+                                Map<String, String> subMap = new HashMap<>();
 
-                        for(String pair : keyValuePairs)                        //iterate over the pairs
-                        {
-                            String[] entry = pair.split("=");                   //split the pairs to get key and value
-                            subMap.put(entry[0].trim(), entry[1].trim());          //add them to the hashmap and trim whitespaces
-                        }
+                                for (String pair : keyValuePairs)                        //iterate over the pairs
+                                {
+                                        String[] entry = pair.split("=");                   //split the pairs to get key and value
+                                        subMap.put(entry[0].trim(), entry[1].trim());          //add them to the hashmap and trim whitespaces
+                                }
 
-                        //UPDATE MARKERS ON MAP
-                        if(usersMarkersMap.containsKey(key))
-                        {
-                            //If the current user's marker existed previously then we only need to update it rather create another marker which leads to 2 markers for a single user
-                            Marker marker = usersMarkersMap.get(key);
-                            marker.setPosition(new LatLng(Double.parseDouble(subMap.get("lat")), Double.parseDouble(subMap.get("ln")))); // Update your marker
-                        }
-                        else
-                        {
-                            //If the marker for a user doesnt exist,we need to create a new one
-                            //We cant directly give an image as a marker,we need to convert it into a bitmap icon.
-                            BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(getIconPathFromDrawable(subMap.get("unitType")));
-                            Marker usersMarker = mMap.addMarker(new MarkerOptions()
-                                    .position(new LatLng(Double.parseDouble(subMap.get("lat")), Double.parseDouble(subMap.get("ln"))))
-                                    .title(key)
-                                    .icon(icon));
+                                //UPDATE MARKERS ON MAP
+                                if (usersMarkersMap.containsKey(key)) {
+                                    //If the current user's marker existed previously then we only need to update it rather create another marker which leads to 2 markers for a single user
+                                    Marker marker = usersMarkersMap.get(key);
+                                    marker.setPosition(new LatLng(Double.parseDouble(subMap.get("lat")), Double.parseDouble(subMap.get("ln")))); // Update your marker
+                                } else {
+                                    //If the marker for a user doesnt exist,we need to create a new one
+                                    //We cant directly give an image as a marker,we need to convert it into a bitmap icon.
+                                    BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(getIconPathFromDrawable(subMap.get("unitType")));
+                                    Marker usersMarker = mMap.addMarker(new MarkerOptions()
+                                            .position(new LatLng(Double.parseDouble(subMap.get("lat")), Double.parseDouble(subMap.get("ln"))))
+                                            .title(key)
+                                            .icon(icon));
 
-                            usersMarkersMap.put(key, usersMarker);
+                                    usersMarkersMap.put(key, usersMarker);
+                                }
+
                         }
                     }
+
                 }
-            }
 
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
 
-            }
-        });
-
+                }
+            });
     }
 
     private int getIconPathFromDrawable(String value)
     {
         //Function Objective:Return the image path for the corresponding unitType
-        switch (value)
+        if(value==null)
         {
-            case "ambulance":return R.drawable.ambulance;
-            case "firefighter":return R.drawable.firetruck;
-            case "rescuer":return R.drawable.rescuer;
-            case "victimDeceased":return R.drawable.victimdeceased;
-            case "victimCritical":return R.drawable.victimcritical;
-            case "victimInjured":return R.drawable.victiminjured;
-            case "victimFine":return R.drawable.victimfine;
+            return 0;
         }
-        return R.drawable.rescuer;
+            switch (value) {
+                case "ambulance":
+                    return R.drawable.ambulance;
+                case "firefighter":
+                    return R.drawable.firetruck;
+                case "rescuer":
+                    return R.drawable.rescuer;
+                case "victimDeceased":
+                    return R.drawable.victimdeceased;
+                case "victimCritical":
+                    return R.drawable.victimcritical;
+                case "victimInjured":
+                    return R.drawable.victiminjured;
+                case "victimFine":
+                    return R.drawable.victimfine;
+            }
+            return R.drawable.victimfine;
+
     }
 
     private void implementUnitType()
     {
-        Log.i("SUPERMAN","fuck");
-        Log.i("SUPERMAN",LocalDB.getUnitType());
         switch (LocalDB.getUnitType())
         {
             case "firefighter":firefighter();
@@ -294,19 +303,66 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void rescuer()
     {
-        Log.i("SUPERMAN","RESCUER");
         //TODO:COMPLETE RESCUER MODULE
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(LatLng latLng) {
-                Log.i("NIHAL","HELLO");
-                showAlertDialog();
+                rescuerCard.setVisibility(View.VISIBLE);
+                victimLatLng=latLng;
             }
         });
     }
 
-    private void showAlertDialog()
+    public void setVictim(View view)
     {
-        rescuerCard.setVisibility(View.VISIBLE);
+        double latValue,lngValue;
+        latValue=victimLatLng.latitude;
+        lngValue=victimLatLng.longitude;
+
+        switch (view.getId())
+        {
+            case R.id.deceasedButton:
+                addVictimToFireBase(latValue,lngValue,"victimDeceased");
+                break;
+            case R.id.criticalButton:
+                addVictimToFireBase(latValue,lngValue,"victimCritical");
+                break;
+            case R.id.injuredButton:
+                addVictimToFireBase(latValue,lngValue,"victimInjured");
+                break;
+            case R.id.fineButton:
+                addVictimToFireBase(latValue,lngValue,"victimFine");
+                break;
+        }
+    }
+
+    public void addVictimToFireBase(double latValue,double lngValue,String unitTypeValue)
+    {
+        //Function Objective:Add a new victim to firebase
+        try
+        {
+            mRootRef = FirebaseDatabase.getInstance().getReference();
+            unitRef = mRootRef.child("Units");
+            userRef=unitRef.child(generateVictimName());
+            userRef.child("lat").setValue(latValue);
+            userRef.child("ln").setValue(lngValue);
+            userRef.child("unitType").setValue(unitTypeValue);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        rescuerCard.setVisibility(View.INVISIBLE);
+    }
+
+    private String generateVictimName()
+    {
+        String victimName="VICTIM ";
+        Random rand = new Random();
+
+        int  n = rand.nextInt(8999) + 1000;
+        //9999 is the maximum and the 1000 is our minimum
+        victimName+=n;
+        return victimName;
     }
 }
