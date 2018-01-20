@@ -2,19 +2,14 @@ package com.disastermanagment_vjc.www.disastermanagmentorganization;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.AlertDialog;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Location;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v7.widget.CardView;
-import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.GoogleMap;
@@ -31,6 +26,10 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.shashank.sony.fancydialoglib.Animation;
+import com.shashank.sony.fancydialoglib.FancyAlertDialog;
+import com.shashank.sony.fancydialoglib.FancyAlertDialogListener;
+import com.shashank.sony.fancydialoglib.Icon;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -284,6 +283,8 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void implementUnitType()
     {
+        //Function Objective:Implement user's unitType functions
+        //Example:If the signed in user is a firefighter,implement firefighter properties only
         switch (LocalDB.getUnitType())
         {
             case "firefighter":firefighter();
@@ -298,32 +299,73 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void firefighter()
     {
+        //Function Objective:Implement firefighter properties
         //TODO:COMPLETE FIREFIGHTER MODULE
     }
 
     private void ambulance()
     {
+        //Function Objective:Implement ambulance properties
         //TODO:COMPLETE AMBULANCE MODULE
     }
 
     private void rescuer()
     {
-        //TODO:COMPLETE RESCUER MODULE
+        //Function Objective:Implement rescuer properties
+
+        //Add a victim by long pressing on the victim's location
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(LatLng latLng) {
+                //Display the layout that gives the victim health options like deceased,critical etc
                 rescuerCard.setVisibility(View.VISIBLE);
                 victimLatLng=latLng;
             }
         });
 
+
+        //Attend a victim,thereby deleting the marker,This is done by clicking on the victim marker
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
-            public boolean onMarkerClick(Marker marker) {
-                //TODO:BUILD AN ALERT BOX
-                deleteVictimFromFireBase(marker.getTitle());
-                usersMarkersMap.remove(marker.getTitle());
-                marker.remove();
+            public boolean onMarkerClick(final Marker marker) {
+
+
+                if (marker.getTitle().contains("VICTIM")) {
+                    //Only attend Victims
+
+                    //Give an alert to confirm the attend
+
+                    new FancyAlertDialog.Builder(MainActivity.this)
+                            .setTitle("Attend the victim")
+                            .setBackgroundColor(Color.parseColor("#F44336"))  //Don't pass R.color.colorvalue
+                            .setMessage("Are you sure you want to attend the Victim")
+                            .setNegativeBtnText("No")
+                            .setPositiveBtnBackground(Color.parseColor("#D32F2F"))  //Don't pass R.color.colorvalue
+                            .setPositiveBtnText("Yes")
+                            .setNegativeBtnBackground(Color.parseColor("#FFA9A7A8"))  //Don't pass R.color.colorvalue
+                            .setAnimation(Animation.POP)
+                            .isCancellable(true)
+                            .setIcon(R.drawable.ic_error_outline_white_48dp, Icon.Visible)
+
+                            .OnPositiveClicked(new FancyAlertDialogListener() {
+                                @Override
+                                public void OnClick() {
+
+                                    //Remove the victims from everywhere
+                                    deleteVictimFromFireBase(marker.getTitle());
+                                    usersMarkersMap.remove(marker.getTitle());
+                                    marker.remove();
+
+                                }
+                            })
+
+                            .OnNegativeClicked(new FancyAlertDialogListener() {
+                                @Override
+                                public void OnClick() {
+                                }
+                            })
+                            .build();
+                }
                 return false;
             }
         });
@@ -331,10 +373,14 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
     public void setVictim(View view)
     {
+        //Function Objective:Create a new victim
+
+        //Below values are obtained when the user long presses on the map
         double latValue,lngValue;
         latValue=victimLatLng.latitude;
         lngValue=victimLatLng.longitude;
 
+        //Menu for which button is selected
         switch (view.getId())
         {
             case R.id.deceasedButton:
@@ -354,8 +400,10 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void deleteVictimFromFireBase(String victimName)
     {
+        //Function Objective:Remove the victim record from firebase
         mRootRef = FirebaseDatabase.getInstance().getReference();
         unitRef = mRootRef.child("Units");
+        //Delete the entire victim objects in the Units tree
         unitRef.child(victimName).removeValue();
     }
 
@@ -368,6 +416,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         {
             mRootRef = FirebaseDatabase.getInstance().getReference();
             unitRef = mRootRef.child("Units");
+            //Generate a random victim child in the Units ref
             userRef=unitRef.child(generateVictimName());
             userRef.child("lat").setValue(latValue);
             userRef.child("ln").setValue(lngValue);
@@ -382,12 +431,18 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
     private String generateVictimName()
     {
+        //Generate a random vicitm name like VICTIM 1010,VICTIM 3168 etc
         String victimName="VICTIM ";
-        Random rand = new Random();
 
+        //Java Random Number Generator
+        Random rand = new Random();
         int  n = rand.nextInt(8999) + 1000;
         //9999 is the maximum and the 1000 is our minimum
+
+        //Add the random number to the String "VICTIM"
         victimName+=n;
+
         return victimName;
     }
+
 }
