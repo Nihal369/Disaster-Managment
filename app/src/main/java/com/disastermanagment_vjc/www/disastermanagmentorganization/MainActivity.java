@@ -217,7 +217,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                                 String[] keyValuePairs = value.split(",");              //split the string to create key-value pairs
                                 Map<String, String> subMap = new HashMap<>();
 
-                                if(keyValuePairs.length==3) {
+                                if(keyValuePairs.length==3) {//Check if 3 parameters lat,lng and unitType are retrieved
                                     for (String pair : keyValuePairs)                        //iterate over the pairs
                                     {
                                         String[] entry = pair.split("=");                   //split the pairs to get key and value
@@ -316,6 +316,17 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 victimLatLng=latLng;
             }
         });
+
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                //TODO:BUILD AN ALERT BOX
+                deleteVictimFromFireBase(marker.getTitle());
+                usersMarkersMap.remove(marker.getTitle());
+                marker.remove();
+                return false;
+            }
+        });
     }
 
     public void setVictim(View view)
@@ -341,7 +352,16 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    public void addVictimToFireBase(double latValue,double lngValue,String unitTypeValue)
+    private void deleteVictimFromFireBase(String victimName)
+    {
+        mRootRef = FirebaseDatabase.getInstance().getReference();
+        unitRef = mRootRef.child("Units");
+        unitRef.child(victimName).removeValue();
+    }
+
+
+
+    private void addVictimToFireBase(double latValue,double lngValue,String unitTypeValue)
     {
         //Function Objective:Add a new victim to firebase
         try
