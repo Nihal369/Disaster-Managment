@@ -208,36 +208,41 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                         //Retrieve data from the snapshot map
                         for (String key : fireBaseMap.keySet()) {
 
-                            //Split the value string into a hashmap
-                            //Eg:{lat:0,ln:0,unitType:rescuer} is split into a hashmap
-                            String value = String.valueOf(fireBaseMap.get(key));
+                            if (fireBaseMap.get(key) != null) {
+
+                                //Split the value string into a hashmap
+                                //Eg:{lat:0,ln:0,unitType:rescuer} is split into a hashmap
+                                String value = String.valueOf(fireBaseMap.get(key));
                                 value = value.substring(1, value.length() - 1);           //remove curly brackets
                                 String[] keyValuePairs = value.split(",");              //split the string to create key-value pairs
                                 Map<String, String> subMap = new HashMap<>();
 
-                                for (String pair : keyValuePairs)                        //iterate over the pairs
-                                {
+                                if(keyValuePairs.length==3) {
+                                    for (String pair : keyValuePairs)                        //iterate over the pairs
+                                    {
                                         String[] entry = pair.split("=");                   //split the pairs to get key and value
                                         subMap.put(entry[0].trim(), entry[1].trim());          //add them to the hashmap and trim whitespaces
+                                    }
+
+                                    //UPDATE MARKERS ON MAP
+                                    if (usersMarkersMap.containsKey(key)) {
+                                        //If the current user's marker existed previously then we only need to update it rather create another marker which leads to 2 markers for a single user
+                                        Marker marker = usersMarkersMap.get(key);
+                                        marker.setPosition(new LatLng(Double.parseDouble(subMap.get("lat")), Double.parseDouble(subMap.get("ln")))); // Update your marker
+                                    } else {
+                                        //If the marker for a user doesnt exist,we need to create a new one
+                                        //We cant directly give an image as a marker,we need to convert it into a bitmap icon.
+                                        BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(getIconPathFromDrawable(subMap.get("unitType")));
+                                        Marker usersMarker = mMap.addMarker(new MarkerOptions()
+                                                .position(new LatLng(Double.parseDouble(subMap.get("lat")), Double.parseDouble(subMap.get("ln"))))
+                                                .title(key)
+                                                .icon(icon));
+
+                                        usersMarkersMap.put(key, usersMarker);
+                                    }
                                 }
 
-                                //UPDATE MARKERS ON MAP
-                                if (usersMarkersMap.containsKey(key)) {
-                                    //If the current user's marker existed previously then we only need to update it rather create another marker which leads to 2 markers for a single user
-                                    Marker marker = usersMarkersMap.get(key);
-                                    marker.setPosition(new LatLng(Double.parseDouble(subMap.get("lat")), Double.parseDouble(subMap.get("ln")))); // Update your marker
-                                } else {
-                                    //If the marker for a user doesnt exist,we need to create a new one
-                                    //We cant directly give an image as a marker,we need to convert it into a bitmap icon.
-                                    BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(getIconPathFromDrawable(subMap.get("unitType")));
-                                    Marker usersMarker = mMap.addMarker(new MarkerOptions()
-                                            .position(new LatLng(Double.parseDouble(subMap.get("lat")), Double.parseDouble(subMap.get("ln"))))
-                                            .title(key)
-                                            .icon(icon));
-
-                                    usersMarkersMap.put(key, usersMarker);
-                                }
-
+                            }
                         }
                     }
 
