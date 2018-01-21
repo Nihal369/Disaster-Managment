@@ -157,6 +157,17 @@
 
     </android.support.v7.widget.CardView>
 
+    <ImageView
+        android:id="@+id/statusImageView"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="16dp"
+        android:src="@drawable/available"
+        android:onClick="changeStatus"
+        />
+
 
 </RelativeLayout>
 

@@ -11,6 +11,8 @@ import android.os.Bundle;
 import android.support.v7.widget.CardView;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
+
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.GoogleMap;
@@ -52,6 +54,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     Map<String,Marker>usersMarkersMap;
     CardView rescuerCard;
     LatLng victimLatLng;
+    ImageView statusButtonImage;
 
 
     @Override
@@ -63,6 +66,14 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         usersMarkersMap=new HashMap<>();
 
         rescuerCard=findViewById(R.id.rescuerCard);
+        statusButtonImage=findViewById(R.id.statusImageView);
+        if(LocalDB.getStatus().equals("available")) {
+            statusButtonImage.setImageResource(R.drawable.available);
+        }
+        else
+        {
+            statusButtonImage.setImageResource(R.drawable.busy);
+        }
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -230,6 +241,8 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                                         //If the current user's marker existed previously then we only need to update it rather create another marker which leads to 2 markers for a single user
                                         Marker marker = usersMarkersMap.get(key);
                                         marker.setPosition(new LatLng(Double.parseDouble(subMap.get("lat")), Double.parseDouble(subMap.get("ln")))); // Update your marker
+                                        BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(getIconPathFromDrawable(subMap.get("unitType"),subMap.get("status")));
+                                        marker.setIcon(icon);//Update icon if necessary
                                     } else {
                                         //If the marker for a user doesnt exist,we need to create a new one
                                         //We cant directly give an image as a marker,we need to convert it into a bitmap icon.
@@ -596,6 +609,22 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         victimName+=n;
 
         return victimName;
+    }
+
+    public void changeStatus(View view)
+    {
+        //Function Objective:Change status in LocalDB & Firebase
+        if(LocalDB.getStatus().equals("available"))
+        {
+            LocalDB.setStatus("busy");
+            statusButtonImage.setImageResource(R.drawable.busy);
+        }
+        else
+        {
+            LocalDB.setStatus("available");
+            statusButtonImage.setImageResource(R.drawable.available);
+        }
+        updateFirebaseData(latitude,longitude,LocalDB.getUnitType(),LocalDB.getStatus());
     }
 
 }
