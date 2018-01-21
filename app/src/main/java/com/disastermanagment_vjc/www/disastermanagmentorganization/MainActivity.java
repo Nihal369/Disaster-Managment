@@ -57,7 +57,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     CardView rescuerCard;
     LatLng victimLatLng;
     ImageView statusButtonImage;
-    Map<String,Circle> fireArea;
+    Map<String,Circle> fireAreaMap;
 
 
     @Override
@@ -67,6 +67,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         setContentView(R.layout.activity_main);
         requestPermissionFromUser();
         usersMarkersMap=new HashMap<>();
+        fireAreaMap=new HashMap<>();
 
         rescuerCard=findViewById(R.id.rescuerCard);
         statusButtonImage=findViewById(R.id.statusImageView);
@@ -262,7 +263,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                                     //Draw fire circle around fire
                                     if(subMap.get("unitType").equals("fire"))
                                     {
-                                        drawFireCircle(new LatLng(Double.parseDouble(subMap.get("lat")), Double.parseDouble(subMap.get("ln"))));
+                                        drawFireCircle(new LatLng(Double.parseDouble(subMap.get("lat")), Double.parseDouble(subMap.get("ln"))),key);
                                     }
                                 }
 
@@ -345,7 +346,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     private void firefighter()
     {
         //Function Objective:Implement firefighter properties
-        //TODO:COMPLETE FIREFIGHTER MODULE
+
         //Add a victim by long pressing on the victim's location
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
@@ -433,18 +434,22 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    private void drawFireCircle(LatLng latLngValue)
+    private void drawFireCircle(LatLng latLngValue,String fireId)
     {
+        //Function Object:Draw a red translucent area around the fire marker
         // Instantiates a new CircleOptions object and defines the center and radius
         CircleOptions circleOptions = new CircleOptions()
                 .strokeColor(Color.RED) //Outer black border
                 .fillColor(Color.argb(64, 255, 0, 0)) //inside of the geofence will be transparent, change to whatever color you prefer like 0x88ff0000 for mid-transparent red
                 .center(latLngValue) // the LatLng Object of your geofence location
-                .radius(8000); // The radius (in meters) of your geofence
+                .radius(2500); // The radius (in meters) of your geofence
 
-        // Get back the mutable Circle
+
         Circle circle= mMap.addCircle(circleOptions);
-        //return circle;
+        //Add only a single entry to fireAreaMap
+        if (!fireAreaMap.containsKey(fireId)) {
+            fireAreaMap.put(fireId,circle);
+        }
     }
 
 
@@ -494,6 +499,10 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                             .OnPositiveClicked(new FancyAlertDialogListener() {
                                 @Override
                                 public void OnClick() {
+                                    //Remove the fire Circle
+                                    Circle myCircle=fireAreaMap.get(marker.getTitle());
+                                    fireAreaMap.remove(marker.getTitle());
+                                    myCircle.remove();
                                     //Remove the victims from everywhere
                                     deleteVictimOrFireFromFireBase(marker.getTitle());
                                     usersMarkersMap.remove(marker.getTitle());
