@@ -426,10 +426,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             userRef.child("unitType").setValue("fire");
             userRef.child("status").setValue("fire");
 
-            //Draw a circle surrounding the fire
-            LatLng latLng=new LatLng(latValue,lngValue);
-            drawFireCircle(latLng);
-
         }
         catch (Exception e)
         {
@@ -448,6 +444,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
         // Get back the mutable Circle
         Circle circle= mMap.addCircle(circleOptions);
+        //return circle;
     }
 
 
