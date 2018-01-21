@@ -276,6 +276,8 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                     return R.drawable.victiminjured;
                 case "victimFine":
                     return R.drawable.victimfine;
+                case "fire":
+                    return R.drawable.fire;
             }
             return R.drawable.victimfine;
 
@@ -301,12 +303,51 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     {
         //Function Objective:Implement firefighter properties
         //TODO:COMPLETE FIREFIGHTER MODULE
+        //Add a victim by long pressing on the victim's location
+        mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+            @Override
+            public void onMapLongClick(final LatLng latLng) {
+
+                //Add fire to the selected location
+
+                new FancyAlertDialog.Builder(MainActivity.this)
+                        .setTitle("Add Fire")
+                        .setBackgroundColor(Color.parseColor("#F39C12"))  //Don't pass R.color.colorvalue
+                        .setMessage("Are you sure you want to add the fire")
+                        .setNegativeBtnText("No")
+                        .setPositiveBtnBackground(Color.parseColor("#D35400"))  //Don't pass R.color.colorvalue
+                        .setPositiveBtnText("Yes")
+                        .setNegativeBtnBackground(Color.parseColor("#FFA9A7A8"))  //Don't pass R.color.colorvalue
+                        .setAnimation(Animation.POP)
+                        .isCancellable(true)
+                        .setIcon(R.drawable.ic_error_outline_white_48dp, Icon.Visible)
+
+                        .OnPositiveClicked(new FancyAlertDialogListener() {
+                            @Override
+                            public void OnClick() {
+
+                              addFireToFirebase(latLng.latitude,latLng.longitude);
+
+                            }
+                        })
+
+                        .OnNegativeClicked(new FancyAlertDialogListener() {
+                            @Override
+                            public void OnClick() {
+                            }
+                        })
+                        .build();
+            }
+        });
+
+        //Remove fire
+        removeFire();
     }
 
     private void ambulance()
     {
         //Function Objective:Implement ambulance properties
-        //TODO:COMPLETE AMBULANCE MODULE
+        attendVictim();
     }
 
     private void rescuer()
@@ -323,7 +364,62 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
 
+        //Attend a victim
+        attendVictim();
 
+    }
+
+    private void removeFire()
+    {
+        //Remove a Fire,thereby deleting the marker,This is done by clicking on the Fire marker
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(final Marker marker) {
+
+
+                if (marker.getTitle().contains("FIRE")) {
+                    //Only remove FIRE markers
+
+                    //Give an alert to confirm the removal
+
+                    new FancyAlertDialog.Builder(MainActivity.this)
+                            .setTitle("Remove Fire")
+                            .setBackgroundColor(Color.parseColor("#F39C12"))  //Don't pass R.color.colorvalue
+                            .setMessage("Are you sure you want to extinguish the fire")
+                            .setNegativeBtnText("No")
+                            .setPositiveBtnBackground(Color.parseColor("#D35400"))  //Don't pass R.color.colorvalue
+                            .setPositiveBtnText("Yes")
+                            .setNegativeBtnBackground(Color.parseColor("#FFA9A7A8"))  //Don't pass R.color.colorvalue
+                            .setAnimation(Animation.POP)
+                            .isCancellable(true)
+                            .setIcon(R.drawable.ic_error_outline_white_48dp, Icon.Visible)
+
+                            .OnPositiveClicked(new FancyAlertDialogListener() {
+                                @Override
+                                public void OnClick() {
+
+                                    //Remove the victims from everywhere
+                                    deleteVictimOrFireFromFireBase(marker.getTitle());
+                                    usersMarkersMap.remove(marker.getTitle());
+                                    marker.remove();
+
+                                }
+                            })
+
+                            .OnNegativeClicked(new FancyAlertDialogListener() {
+                                @Override
+                                public void OnClick() {
+                                }
+                            })
+                            .build();
+                }
+                return false;
+            }
+        });
+    }
+
+    private void attendVictim()
+    {
         //Attend a victim,thereby deleting the marker,This is done by clicking on the victim marker
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
@@ -331,7 +427,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
 
                 if (marker.getTitle().contains("VICTIM")) {
-                    //Only attend Victims
+                    //Only attend Victim markers
 
                     //Give an alert to confirm the attend
 
@@ -352,7 +448,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                                 public void OnClick() {
 
                                     //Remove the victims from everywhere
-                                    deleteVictimFromFireBase(marker.getTitle());
+                                    deleteVictimOrFireFromFireBase(marker.getTitle());
                                     usersMarkersMap.remove(marker.getTitle());
                                     marker.remove();
 
@@ -398,7 +494,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    private void deleteVictimFromFireBase(String victimName)
+    private void deleteVictimOrFireFromFireBase(String victimName)
     {
         //Function Objective:Remove the victim record from firebase
         mRootRef = FirebaseDatabase.getInstance().getReference();
@@ -438,6 +534,41 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         Random rand = new Random();
         int  n = rand.nextInt(8999) + 1000;
         //9999 is the maximum and the 1000 is our minimum
+
+        //Add the random number to the String "VICTIM"
+        victimName+=n;
+
+        return victimName;
+    }
+
+    private void addFireToFirebase(double latValue,double lngValue)
+    {
+        //Function Objective:Add a new fire to firebase
+        try {
+            mRootRef = FirebaseDatabase.getInstance().getReference();
+            unitRef = mRootRef.child("Units");
+            //Generate a random fire child in the Units ref
+            userRef=unitRef.child(generateFireName());
+            userRef.child("lat").setValue(latValue);
+            userRef.child("ln").setValue(lngValue);
+            userRef.child("unitType").setValue("fire");
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+
+    private String generateFireName()
+    {
+        //Generate a random vicitm name like VICTIM 1010,VICTIM 3168 etc
+        String victimName="FIRE ";
+
+        //Java Random Number Generator
+        Random rand = new Random();
+        int  n = rand.nextInt(89) + 10;
+        //99 is the maximum and the 10 is our minimum
 
         //Add the random number to the String "VICTIM"
         victimName+=n;

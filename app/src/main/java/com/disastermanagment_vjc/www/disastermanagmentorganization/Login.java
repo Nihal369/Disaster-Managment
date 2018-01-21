@@ -306,7 +306,7 @@ public class Login extends AppCompatActivity {
 
     private boolean isNetworkAvailable() {
         //Function Objective: check whether Internet is available
-        //Initalize the Connectivity Manager Object
+        //Initialize the Connectivity Manager Object
         ConnectivityManager connectivityManager
                 = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         assert connectivityManager != null;
