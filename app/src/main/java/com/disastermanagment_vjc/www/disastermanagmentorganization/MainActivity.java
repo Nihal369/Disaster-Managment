@@ -44,6 +44,9 @@ import io.nlopez.smartlocation.OnLocationUpdatedListener;
 import io.nlopez.smartlocation.SmartLocation;
 import io.nlopez.smartlocation.location.config.LocationAccuracy;
 import io.nlopez.smartlocation.location.config.LocationParams;
+//TODO:INTELLIGENT NOTIFICAITON SYSTEM
+//TODO:CENTRAL SUPERVISION UNIT
+//TODO:COMMUNICATE RESCUE UNITS
 public class MainActivity extends FragmentActivity implements OnMapReadyCallback {
 
     //Object Decelerations
