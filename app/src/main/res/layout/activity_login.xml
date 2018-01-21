@@ -54,6 +54,15 @@
             android:src="@drawable/logo"
             android:layout_margin="16dp"/>
 
+        <ImageView
+            android:id="@+id/spinner"
+            android:layout_width="75dp"
+            android:layout_height="75dp"
+            android:src="@drawable/spinner"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_margin="64dp"/>
+
     </RelativeLayout>
 
 
