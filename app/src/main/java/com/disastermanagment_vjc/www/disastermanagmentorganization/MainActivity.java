@@ -20,6 +20,8 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -55,6 +57,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     CardView rescuerCard;
     LatLng victimLatLng;
     ImageView statusButtonImage;
+    Map<String,Circle> fireArea;
 
 
     @Override
@@ -235,7 +238,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                                         String[] entry = pair.split("=");                   //split the pairs to get key and value
                                         subMap.put(entry[0].trim(), entry[1].trim());          //add them to the hashmap and trim whitespaces
                                     }
-                                    Log.i("SUPERMAN",subMap.toString());
+
                                     //UPDATE MARKERS ON MAP
                                     if (usersMarkersMap.containsKey(key)) {
                                         //If the current user's marker existed previously then we only need to update it rather create another marker which leads to 2 markers for a single user
@@ -243,6 +246,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                                         marker.setPosition(new LatLng(Double.parseDouble(subMap.get("lat")), Double.parseDouble(subMap.get("ln")))); // Update your marker
                                         BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(getIconPathFromDrawable(subMap.get("unitType"),subMap.get("status")));
                                         marker.setIcon(icon);//Update icon if necessary
+
                                     } else {
                                         //If the marker for a user doesnt exist,we need to create a new one
                                         //We cant directly give an image as a marker,we need to convert it into a bitmap icon.
@@ -253,6 +257,12 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                                                 .icon(icon));
 
                                         usersMarkersMap.put(key, usersMarker);
+                                    }
+
+                                    //Draw fire circle around fire
+                                    if(subMap.get("unitType").equals("fire"))
+                                    {
+                                        drawFireCircle(new LatLng(Double.parseDouble(subMap.get("lat")), Double.parseDouble(subMap.get("ln"))));
                                     }
                                 }
 
@@ -409,16 +419,35 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             mRootRef = FirebaseDatabase.getInstance().getReference();
             unitRef = mRootRef.child("Units");
             //Generate a random fire child in the Units ref
-            userRef=unitRef.child(generateFireName());
+            String fireId=generateFireName();
+            userRef=unitRef.child(fireId);
             userRef.child("lat").setValue(latValue);
             userRef.child("ln").setValue(lngValue);
             userRef.child("unitType").setValue("fire");
             userRef.child("status").setValue("fire");
+
+            //Draw a circle surrounding the fire
+            LatLng latLng=new LatLng(latValue,lngValue);
+            drawFireCircle(latLng);
+
         }
         catch (Exception e)
         {
             e.printStackTrace();
         }
+    }
+
+    private void drawFireCircle(LatLng latLngValue)
+    {
+        // Instantiates a new CircleOptions object and defines the center and radius
+        CircleOptions circleOptions = new CircleOptions()
+                .strokeColor(Color.RED) //Outer black border
+                .fillColor(Color.argb(64, 255, 0, 0)) //inside of the geofence will be transparent, change to whatever color you prefer like 0x88ff0000 for mid-transparent red
+                .center(latLngValue) // the LatLng Object of your geofence location
+                .radius(8000); // The radius (in meters) of your geofence
+
+        // Get back the mutable Circle
+        Circle circle= mMap.addCircle(circleOptions);
     }
 
 
@@ -441,6 +470,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void removeFire()
     {
+
         //Remove a Fire,thereby deleting the marker,This is done by clicking on the Fire marker
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
@@ -467,7 +497,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                             .OnPositiveClicked(new FancyAlertDialogListener() {
                                 @Override
                                 public void OnClick() {
-
                                     //Remove the victims from everywhere
                                     deleteVictimOrFireFromFireBase(marker.getTitle());
                                     usersMarkersMap.remove(marker.getTitle());
