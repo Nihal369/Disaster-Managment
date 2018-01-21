@@ -5,7 +5,7 @@ import android.net.Uri;
 
 public class LocalDB {
 
-    static String fullName,emailAddress,phoneNumber,unitType;
+    static String fullName,emailAddress,phoneNumber,unitType,status;
     static Uri profilePicUri;
 
 
@@ -30,6 +30,13 @@ public class LocalDB {
         unitType = value;
     }
 
+    public static void setStatus(String value) {
+       status = value;
+    }
+
+    public static String getStatus() {
+        return status;
+    }
 
     public static String getUnitType() {
         return unitType;

@@ -9,6 +9,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v7.widget.CardView;
+import android.util.Log;
 import android.view.View;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -145,7 +146,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 .setInterval(mLocTrackingInterval);
 
         //Update the initial position to firebase
-        updateFirebaseData(initalLat,initalLng,LocalDB.getUnitType());
+        updateFirebaseData(initalLat,initalLng,LocalDB.getUnitType(),LocalDB.getStatus());
 
         //SmartLocation Object tracks the position of the user accurately
         SmartLocation.with(this)
@@ -157,12 +158,12 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                     public void onLocationUpdated(Location location) {
                         latitude=location.getLatitude();
                         longitude=location.getLongitude();
-                        updateFirebaseData(latitude,longitude,LocalDB.getUnitType());
+                        updateFirebaseData(latitude,longitude,LocalDB.getUnitType(),LocalDB.getStatus());
                     }
                 });
     }
 
-    private void updateFirebaseData(double latValue,double lngValue,String unitTypeValue)
+    private void updateFirebaseData(double latValue,double lngValue,String unitTypeValue,String statusValue)
     {
         //Function Objective:Update the coordinates on the firebase real-time database
         try
@@ -172,6 +173,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             userRef.child("ln").setValue(lngValue);
             assert unitTypeValue!=null;
             userRef.child("unitType").setValue(unitTypeValue);
+            userRef.child("status").setValue(statusValue);
         }
         catch (Exception e)
         {
@@ -216,13 +218,13 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                                 String[] keyValuePairs = value.split(",");              //split the string to create key-value pairs
                                 Map<String, String> subMap = new HashMap<>();
 
-                                if(keyValuePairs.length==3) {//Check if 3 parameters lat,lng and unitType are retrieved
+                                if(keyValuePairs.length==4) {//Check if 4 parameters lat,lng,status and unitType are retrieved
                                     for (String pair : keyValuePairs)                        //iterate over the pairs
                                     {
                                         String[] entry = pair.split("=");                   //split the pairs to get key and value
                                         subMap.put(entry[0].trim(), entry[1].trim());          //add them to the hashmap and trim whitespaces
                                     }
-
+                                    Log.i("SUPERMAN",subMap.toString());
                                     //UPDATE MARKERS ON MAP
                                     if (usersMarkersMap.containsKey(key)) {
                                         //If the current user's marker existed previously then we only need to update it rather create another marker which leads to 2 markers for a single user
@@ -231,7 +233,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                                     } else {
                                         //If the marker for a user doesnt exist,we need to create a new one
                                         //We cant directly give an image as a marker,we need to convert it into a bitmap icon.
-                                        BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(getIconPathFromDrawable(subMap.get("unitType")));
+                                        BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(getIconPathFromDrawable(subMap.get("unitType"),subMap.get("status")));
                                         Marker usersMarker = mMap.addMarker(new MarkerOptions()
                                                 .position(new LatLng(Double.parseDouble(subMap.get("lat")), Double.parseDouble(subMap.get("ln"))))
                                                 .title(key)
@@ -254,32 +256,50 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             });
     }
 
-    private int getIconPathFromDrawable(String value)
+    private int getIconPathFromDrawable(String unitValue,String statusValue)
     {
         //Function Objective:Return the image path for the corresponding unitType
-        if(value==null)
+        if(unitValue==null || statusValue==null)
         {
             return 0;
         }
-            switch (value) {
+            switch (unitValue) {
                 case "ambulance":
-                    return R.drawable.ambulance;
+                    if(statusValue.equals("available")) {
+                        return R.drawable.ambulanceavailable;
+                    }
+                    else
+                    {
+                        return R.drawable.ambulancebusy;
+                    }
                 case "firefighter":
-                    return R.drawable.firetruck;
+                    if(statusValue.equals("available")) {
+                        return R.drawable.firetruckavailable;
+                    }
+                    else
+                    {
+                        return R.drawable.firetruckbusy;
+                    }
                 case "rescuer":
-                    return R.drawable.rescuer;
-                case "victimDeceased":
-                    return R.drawable.victimdeceased;
-                case "victimCritical":
-                    return R.drawable.victimcritical;
-                case "victimInjured":
-                    return R.drawable.victiminjured;
-                case "victimFine":
-                    return R.drawable.victimfine;
-                case "fire":
-                    return R.drawable.fire;
+                    if(statusValue.equals("available")) {
+                        return R.drawable.rescueravailable;
+                    }
+                    else
+                    {
+                        return R.drawable.rescuerbusy;
+                    }
+                case "victim":
+                    switch (statusValue)
+                    {
+                        case "deceased":return R.drawable.victimdeceased;
+                        case "critical":return R.drawable.victimcritical;
+                        case "injured":return R.drawable.victiminjured;
+                        case "fine":return R.drawable.victimfine;
+                    }
+                    break;
+                case "fire":return R.drawable.fire;
             }
-            return R.drawable.victimfine;
+            return R.drawable.rescueravailable;
 
     }
 
@@ -317,7 +337,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                         .setNegativeBtnText("No")
                         .setPositiveBtnBackground(Color.parseColor("#D35400"))  //Don't pass R.color.colorvalue
                         .setPositiveBtnText("Yes")
-                        .setNegativeBtnBackground(Color.parseColor("#FFA9A7A8"))  //Don't pass R.color.colorvalue
+                        .setNegativeBtnBackground(Color.parseColor("#A9A7A8"))  //Don't pass R.color.colorvalue
                         .setAnimation(Animation.POP)
                         .isCancellable(true)
                         .setIcon(R.drawable.ic_error_outline_white_48dp, Icon.Visible)
@@ -369,6 +389,43 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
+    private void addFireToFirebase(double latValue,double lngValue)
+    {
+        //Function Objective:Add a new fire to firebase
+        try {
+            mRootRef = FirebaseDatabase.getInstance().getReference();
+            unitRef = mRootRef.child("Units");
+            //Generate a random fire child in the Units ref
+            userRef=unitRef.child(generateFireName());
+            userRef.child("lat").setValue(latValue);
+            userRef.child("ln").setValue(lngValue);
+            userRef.child("unitType").setValue("fire");
+            userRef.child("status").setValue("fire");
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+
+    private String generateFireName()
+    {
+        //Generate a random vicitm name like VICTIM 1010,VICTIM 3168 etc
+        String victimName="FIRE ";
+
+        //Java Random Number Generator
+        Random rand = new Random();
+        int  n = rand.nextInt(8999) + 1000;
+        //9999 is the maximum and the 1000 is our minimum
+
+        //Add the random number to the String "VICTIM"
+        victimName+=n;
+
+        return victimName;
+    }
+
+
     private void removeFire()
     {
         //Remove a Fire,thereby deleting the marker,This is done by clicking on the Fire marker
@@ -389,7 +446,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                             .setNegativeBtnText("No")
                             .setPositiveBtnBackground(Color.parseColor("#D35400"))  //Don't pass R.color.colorvalue
                             .setPositiveBtnText("Yes")
-                            .setNegativeBtnBackground(Color.parseColor("#FFA9A7A8"))  //Don't pass R.color.colorvalue
+                            .setNegativeBtnBackground(Color.parseColor("#A9A7A8"))  //Don't pass R.color.colorvalue
                             .setAnimation(Animation.POP)
                             .isCancellable(true)
                             .setIcon(R.drawable.ic_error_outline_white_48dp, Icon.Visible)
@@ -438,7 +495,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                             .setNegativeBtnText("No")
                             .setPositiveBtnBackground(Color.parseColor("#D32F2F"))  //Don't pass R.color.colorvalue
                             .setPositiveBtnText("Yes")
-                            .setNegativeBtnBackground(Color.parseColor("#FFA9A7A8"))  //Don't pass R.color.colorvalue
+                            .setNegativeBtnBackground(Color.parseColor("#A9A7A8"))  //Don't pass R.color.colorvalue
                             .setAnimation(Animation.POP)
                             .isCancellable(true)
                             .setIcon(R.drawable.ic_error_outline_white_48dp, Icon.Visible)
@@ -480,16 +537,16 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         switch (view.getId())
         {
             case R.id.deceasedButton:
-                addVictimToFireBase(latValue,lngValue,"victimDeceased");
+                addVictimToFireBase(latValue,lngValue,"victim","deceased");
                 break;
             case R.id.criticalButton:
-                addVictimToFireBase(latValue,lngValue,"victimCritical");
+                addVictimToFireBase(latValue,lngValue,"victim","critical");
                 break;
             case R.id.injuredButton:
-                addVictimToFireBase(latValue,lngValue,"victimInjured");
+                addVictimToFireBase(latValue,lngValue,"victim","injured");
                 break;
             case R.id.fineButton:
-                addVictimToFireBase(latValue,lngValue,"victimFine");
+                addVictimToFireBase(latValue,lngValue,"victim","fine");
                 break;
         }
     }
@@ -504,8 +561,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 
-
-    private void addVictimToFireBase(double latValue,double lngValue,String unitTypeValue)
+    private void addVictimToFireBase(double latValue,double lngValue,String unitTypeValue,String statusValue)
     {
         //Function Objective:Add a new victim to firebase
         try
@@ -517,6 +573,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             userRef.child("lat").setValue(latValue);
             userRef.child("ln").setValue(lngValue);
             userRef.child("unitType").setValue(unitTypeValue);
+            userRef.child("status").setValue(statusValue);
         }
         catch (Exception e)
         {
@@ -534,41 +591,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         Random rand = new Random();
         int  n = rand.nextInt(8999) + 1000;
         //9999 is the maximum and the 1000 is our minimum
-
-        //Add the random number to the String "VICTIM"
-        victimName+=n;
-
-        return victimName;
-    }
-
-    private void addFireToFirebase(double latValue,double lngValue)
-    {
-        //Function Objective:Add a new fire to firebase
-        try {
-            mRootRef = FirebaseDatabase.getInstance().getReference();
-            unitRef = mRootRef.child("Units");
-            //Generate a random fire child in the Units ref
-            userRef=unitRef.child(generateFireName());
-            userRef.child("lat").setValue(latValue);
-            userRef.child("ln").setValue(lngValue);
-            userRef.child("unitType").setValue("fire");
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-    }
-
-
-    private String generateFireName()
-    {
-        //Generate a random vicitm name like VICTIM 1010,VICTIM 3168 etc
-        String victimName="FIRE ";
-
-        //Java Random Number Generator
-        Random rand = new Random();
-        int  n = rand.nextInt(89) + 10;
-        //99 is the maximum and the 10 is our minimum
 
         //Add the random number to the String "VICTIM"
         victimName+=n;

@@ -61,6 +61,7 @@ public class Login extends AppCompatActivity {
     int MY_PERMISSIONS_REQUEST_FINE_LOCATION;
     RelativeLayout splashLayout;
     ImageView loadingSpinnerImage;
+    int flag;
 
 
 
@@ -75,6 +76,7 @@ public class Login extends AppCompatActivity {
             firebaseAuth.addAuthStateListener(mAuthListener);
             splashLayout=findViewById(R.id.splashLayout);
             loadingSpinnerImage=findViewById(R.id.spinner);
+            flag=0;
         }
         else
         {
@@ -213,12 +215,21 @@ public class Login extends AppCompatActivity {
                         {
                             case "unitType":
                                 LocalDB.setUnitType(fireBaseMap.get(key));
-                                //Jump to MainActivity since unitType is retrieved successfully from Firebase
-                                jumpToMainActivity();
+                                flag++;
                                 break;
+                            case "status":
+                                LocalDB.setStatus(fireBaseMap.get(key));
+                                flag++;
+                                break;
+                        }
+                        if(flag==2)
+                        {
+                            //Jump to MainActivity since unitType is retrieved successfully from Firebase
+                            jumpToMainActivity();
                         }
 
                     }
+
                 }
             }
 
