@@ -2,13 +2,16 @@ package com.disastermanagment_vjc.www.disastermanagmentorganization;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
+import android.net.Uri;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v7.widget.CardView;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 
@@ -45,23 +48,22 @@ import io.nlopez.smartlocation.location.config.LocationAccuracy;
 import io.nlopez.smartlocation.location.config.LocationParams;
 
 //TODO:INTELLIGENT NOTIFICAITON SYSTEM
-//TODO:COMMUNICATE RESCUE UNITS
 
 public class MainActivity extends FragmentActivity implements OnMapReadyCallback {
 
     //Object Decelerations
     private GoogleMap mMap;
     private FusedLocationProviderClient mFusedLocationClient;
-    private int MY_PERMISSIONS_REQUEST_FINE_LOCATION;
-    private double initalLat,initalLng,latitude,longitude;
-    private DatabaseReference mRootRef,unitRef,userRef;
-    Map<String,String> fireBaseMap;
-    Map<String,Marker>usersMarkersMap;
+    private int MY_PERMISSIONS_REQUEST_FINE_LOCATION,MY_PERMISSIONS_REQUEST_CALL_PHONE;
+    private double initalLat, initalLng, latitude, longitude;
+    private DatabaseReference mRootRef, unitRef, userRef;
+    Map<String, String> fireBaseMap;
+    Map<String, Marker> usersMarkersMap;
     CardView rescuerCard;
     LatLng victimLatLng;
     ImageView statusButtonImage;
-    Map<String,Circle> fireAreaMap;
-
+    Map<String, Circle> fireAreaMap;
+    Map<String, String> phoneNumberMap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,16 +71,15 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         requestPermissionFromUser();
-        usersMarkersMap=new HashMap<>();
-        fireAreaMap=new HashMap<>();
+        usersMarkersMap = new HashMap<>();
+        fireAreaMap = new HashMap<>();
+        phoneNumberMap = new HashMap<>();
 
-        rescuerCard=findViewById(R.id.rescuerCard);
-        statusButtonImage=findViewById(R.id.statusImageView);
-        if(LocalDB.getStatus().equals("available")) {
+        rescuerCard = findViewById(R.id.rescuerCard);
+        statusButtonImage = findViewById(R.id.statusImageView);
+        if (LocalDB.getStatus().equals("available")) {
             statusButtonImage.setImageResource(R.drawable.available);
-        }
-        else
-        {
+        } else {
             statusButtonImage.setImageResource(R.drawable.busy);
         }
 
@@ -112,19 +113,23 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             //Select the appropriate module to be executed according to unitType
             implementUnitType();
 
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             requestPermissionFromUser();
         }
     }
 
-    private void requestPermissionFromUser(){
+    private void requestPermissionFromUser() {
         //Function Objective:Request location permission from the user
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                     MY_PERMISSIONS_REQUEST_FINE_LOCATION);
+        }
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.CALL_PHONE},
+                    MY_PERMISSIONS_REQUEST_CALL_PHONE);
         }
     }
 
@@ -141,16 +146,15 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                         // Got last known location. In some rare situations this can be null.
                         if (location != null) {
                             // Logic to handle location object
-                            initalLat=location.getLatitude();
-                            initalLng=location.getLongitude();
+                            initalLat = location.getLatitude();
+                            initalLng = location.getLongitude();
                         }
 
                     }
                 });
     }
 
-    private void updateUserLocation()
-    {
+    private void updateUserLocation() {
         //Function Objective:Update user's location periodically
 
         long mLocTrackingInterval = 1000 * 3; // Tracking interval set at 3 seconds = 3000 milli seconds
@@ -164,7 +168,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 .setInterval(mLocTrackingInterval);
 
         //Update the initial position to firebase
-        updateFirebaseData(initalLat,initalLng,LocalDB.getUnitType(),LocalDB.getStatus());
+        updateFirebaseData(initalLat, initalLng, LocalDB.getUnitType(), LocalDB.getStatus());
 
         //SmartLocation Object tracks the position of the user accurately
         SmartLocation.with(this)
@@ -174,204 +178,198 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 .start(new OnLocationUpdatedListener() {
                     @Override
                     public void onLocationUpdated(Location location) {
-                        latitude=location.getLatitude();
-                        longitude=location.getLongitude();
-                        updateFirebaseData(latitude,longitude,LocalDB.getUnitType(),LocalDB.getStatus());
+                        latitude = location.getLatitude();
+                        longitude = location.getLongitude();
+                        updateFirebaseData(latitude, longitude, LocalDB.getUnitType(), LocalDB.getStatus());
                     }
                 });
     }
 
-    private void updateFirebaseData(double latValue,double lngValue,String unitTypeValue,String statusValue)
-    {
+    private void updateFirebaseData(double latValue, double lngValue, String unitTypeValue, String statusValue) {
         //Function Objective:Update the coordinates on the firebase real-time database
-        try
-        {
+        try {
             getFirebaseReference();
             userRef.child("lat").setValue(latValue);
             userRef.child("ln").setValue(lngValue);
-            assert unitTypeValue!=null;
+            assert unitTypeValue != null;
             userRef.child("unitType").setValue(unitTypeValue);
             userRef.child("status").setValue(statusValue);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void getFirebaseReference()
-    {
+    private void getFirebaseReference() {
         //Function Objective:Create the firebase reference
         mRootRef = FirebaseDatabase.getInstance().getReference();
         unitRef = mRootRef.child("Units");
-        userRef=unitRef.child(LocalDB.getFullName());
+        userRef = unitRef.child(LocalDB.getFullName());
     }
 
-    private void readDataFromFirebase()
-    {
+    private void readDataFromFirebase() {
         //Function Objective:Reads the data like unitType from firebase
         getFirebaseReference();
 
-            unitRef.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
+        unitRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
 
-                    //Map that stores retrived data from the DataSnapshot
-                    if (dataSnapshot != null) {
-                        fireBaseMap = (HashMap<String, String>) dataSnapshot.getValue();
-                    }
+                //Map that stores retrived data from the DataSnapshot
+                if (dataSnapshot != null) {
+                    fireBaseMap = (HashMap<String, String>) dataSnapshot.getValue();
+                }
 
-                    if (fireBaseMap != null) {
-                        //firebase map eg{NAME={lat=0,ln=0,unitType=rescuer},NAME2........}
+                if (fireBaseMap != null) {
+                    //firebase map eg{NAME={lat=0,ln=0,unitType=rescuer},NAME2........}
 
-                        //Retrieve data from the snapshot map
-                        for (String key : fireBaseMap.keySet()) {
+                    //Retrieve data from the snapshot map
+                    for (String key : fireBaseMap.keySet()) {
 
-                            if (fireBaseMap.get(key) != null) {
+                        if (fireBaseMap.get(key) != null) {
 
-                                //Split the value string into a hashmap
-                                //Eg:{lat:0,ln:0,unitType:rescuer} is split into a hashmap
-                                String value = String.valueOf(fireBaseMap.get(key));
-                                value = value.substring(1, value.length() - 1);           //remove curly brackets
-                                String[] keyValuePairs = value.split(",");              //split the string to create key-value pairs
-                                Map<String, String> subMap = new HashMap<>();
+                            //Split the value string into a hashmap
+                            //Eg:{lat:0,ln:0,unitType:rescuer} is split into a hashmap
+                            String value = String.valueOf(fireBaseMap.get(key));
+                            value = value.substring(1, value.length() - 1);           //remove curly brackets
+                            String[] keyValuePairs = value.split(",");              //split the string to create key-value pairs
+                            Map<String, String> subMap = new HashMap<>();
 
-                                if(keyValuePairs.length==4) {//Check if 4 parameters lat,lng,status and unitType are retrieved
-                                    for (String pair : keyValuePairs)                        //iterate over the pairs
-                                    {
-                                        String[] entry = pair.split("=");                   //split the pairs to get key and value
-                                        subMap.put(entry[0].trim(), entry[1].trim());          //add them to the hashmap and trim whitespaces
-                                    }
+                            if (keyValuePairs.length == 5) {//Check if 5 parameters lat,lng,status,phoneNum and unitType are retrieved
+                                for (String pair : keyValuePairs)                        //iterate over the pairs
+                                {
+                                    String[] entry = pair.split("=");                   //split the pairs to get key and value
+                                    subMap.put(entry[0].trim(), entry[1].trim());             //add them to the hashmap and trim whitespaces
+                                }
 
-                                    //UPDATE MARKERS ON MAP
-                                    if (usersMarkersMap.containsKey(key)) {
-                                        //If the current user's marker existed previously then we only need to update it rather create another marker which leads to 2 markers for a single user
-                                        Marker marker = usersMarkersMap.get(key);
-                                        marker.setPosition(new LatLng(Double.parseDouble(subMap.get("lat")), Double.parseDouble(subMap.get("ln")))); // Update your marker
-                                        BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(getIconPathFromDrawable(subMap.get("unitType"),subMap.get("status")));
-                                        marker.setIcon(icon);//Update icon if necessary
+                                //UPDATE MARKERS ON MAP
+                                if (usersMarkersMap.containsKey(key)) {
+                                    //If the current user's marker existed previously then we only need to update it rather create another marker which leads to 2 markers for a single user
+                                    Marker marker = usersMarkersMap.get(key);
+                                    marker.setPosition(new LatLng(Double.parseDouble(subMap.get("lat")), Double.parseDouble(subMap.get("ln")))); // Update your marker
+                                    BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(getIconPathFromDrawable(subMap.get("unitType"), subMap.get("status")));
+                                    marker.setIcon(icon);//Update icon if necessary
 
-                                    } else {
-                                        //If the marker for a user doesnt exist,we need to create a new one
-                                        //We cant directly give an image as a marker,we need to convert it into a bitmap icon.
-                                        BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(getIconPathFromDrawable(subMap.get("unitType"),subMap.get("status")));
-                                        Marker usersMarker = mMap.addMarker(new MarkerOptions()
-                                                .position(new LatLng(Double.parseDouble(subMap.get("lat")), Double.parseDouble(subMap.get("ln"))))
-                                                .title(key)
-                                                .icon(icon));
+                                } else {
+                                    //If the marker for a user doesnt exist,we need to create a new one
+                                    //We cant directly give an image as a marker,we need to convert it into a bitmap icon.
+                                    BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(getIconPathFromDrawable(subMap.get("unitType"), subMap.get("status")));
+                                    Marker usersMarker = mMap.addMarker(new MarkerOptions()
+                                            .position(new LatLng(Double.parseDouble(subMap.get("lat")), Double.parseDouble(subMap.get("ln"))))
+                                            .title(key)
+                                            .icon(icon));
 
-                                        usersMarkersMap.put(key, usersMarker);
-                                    }
+                                    usersMarkersMap.put(key, usersMarker);
+                                }
 
-                                    //Draw fire circle around fire
-                                    if(subMap.get("unitType").equals("fire"))
-                                    {
-                                        drawFireCircle(new LatLng(Double.parseDouble(subMap.get("lat")), Double.parseDouble(subMap.get("ln"))),key);
-                                    }
+                                //Draw fire circle around fire
+                                if (subMap.get("unitType").equals("fire")) {
+                                    drawFireCircle(new LatLng(Double.parseDouble(subMap.get("lat")), Double.parseDouble(subMap.get("ln"))), key);
+                                }
+
+
+                                //Store phoneNumbers of rescue units in a key value map
+                                if (!phoneNumberMap.containsKey(key)) {
+                                    phoneNumberMap.put(key, subMap.get("phoneNumber"));
+                                    Log.i("SUPERMAN", phoneNumberMap.toString());
                                 }
 
                             }
+
                         }
                     }
-
                 }
 
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
+            }
 
-                }
-            });
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
     }
 
-    private int getIconPathFromDrawable(String unitValue,String statusValue)
-    {
+    private int getIconPathFromDrawable(String unitValue, String statusValue) {
         //Function Objective:Return the image path for the corresponding unitType
-        if(unitValue==null || statusValue==null)
-        {
+        if (unitValue == null || statusValue == null) {
             return 0;
         }
-            switch (unitValue) {
-                case "ambulance":
-                    if(statusValue.equals("available")) {
-                        return R.drawable.ambulanceavailable;
-                    }
-                    else
-                    {
-                        return R.drawable.ambulancebusy;
-                    }
-                case "firefighter":
-                    if(statusValue.equals("available")) {
-                        return R.drawable.firetruckavailable;
-                    }
-                    else
-                    {
-                        return R.drawable.firetruckbusy;
-                    }
-                case "rescuer":
-                    if(statusValue.equals("available")) {
-                        return R.drawable.rescueravailable;
-                    }
-                    else
-                    {
-                        return R.drawable.rescuerbusy;
-                    }
-                case "victim":
-                    switch (statusValue)
-                    {
-                        case "deceased":return R.drawable.victimdeceased;
-                        case "critical":return R.drawable.victimcritical;
-                        case "injured":return R.drawable.victiminjured;
-                        case "fine":return R.drawable.victimfine;
-                    }
-                    break;
-                case "fire":return R.drawable.fire;
+        switch (unitValue) {
+            case "ambulance":
+                if (statusValue.equals("available")) {
+                    return R.drawable.ambulanceavailable;
+                } else {
+                    return R.drawable.ambulancebusy;
+                }
+            case "firefighter":
+                if (statusValue.equals("available")) {
+                    return R.drawable.firetruckavailable;
+                } else {
+                    return R.drawable.firetruckbusy;
+                }
+            case "rescuer":
+                if (statusValue.equals("available")) {
+                    return R.drawable.rescueravailable;
+                } else {
+                    return R.drawable.rescuerbusy;
+                }
+            case "victim":
+                switch (statusValue) {
+                    case "deceased":
+                        return R.drawable.victimdeceased;
+                    case "critical":
+                        return R.drawable.victimcritical;
+                    case "injured":
+                        return R.drawable.victiminjured;
+                    case "fine":
+                        return R.drawable.victimfine;
+                }
+                break;
+            case "fire":
+                return R.drawable.fire;
 
-                case "centralunit":
-                    if(statusValue.equals("available"))
-                    {
-                        return R.drawable.centralunitavailable;
-                    }
-                    else
-                    {
-                        return R.drawable.centralunitbusy;
-                    }
+            case "centralunit":
+                if (statusValue.equals("available")) {
+                    return R.drawable.centralunitavailable;
+                } else {
+                    return R.drawable.centralunitbusy;
+                }
 
-                case "localunit":
-                    if(statusValue.equals("available"))
-                    {
-                        return R.drawable.localunitavailable;
-                    }
-                    else
-                    {
-                        return R.drawable.localunitbusy;
-                    }
-            }
-            return R.drawable.rescueravailable;
+            case "localunit":
+                if (statusValue.equals("available")) {
+                    return R.drawable.localunitavailable;
+                } else {
+                    return R.drawable.localunitbusy;
+                }
+        }
+        return R.drawable.rescueravailable;
 
     }
 
-    private void implementUnitType()
-    {
+    private void implementUnitType() {
         //Function Objective:Implement user's unitType functions
         //Example:If the signed in user is a firefighter,implement firefighter properties only
-        switch (LocalDB.getUnitType())
-        {
-            case "firefighter":firefighter();
-            break;
-            case "ambulance":ambulance();
-            break;
-            case "rescuer":rescuer();
-            break;
-            case "centralunit":centralunit();
-            break;
-            case "localunit":localunit();
-            break;
-            default:rescuer();
+        switch (LocalDB.getUnitType()) {
+            case "firefighter":
+                firefighter();
+                break;
+            case "ambulance":
+                ambulance();
+                break;
+            case "rescuer":
+                rescuer();
+                break;
+            case "centralunit":
+                centralunit();
+                break;
+            case "localunit":
+                localunit();
+                break;
+            default:
+                rescuer();
         }
     }
 
-    private void firefighter()
-    {
+    private void firefighter() {
         //Function Objective:Implement firefighter properties
 
         //Add a victim by long pressing on the victim's location
@@ -397,7 +395,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                             @Override
                             public void OnClick() {
 
-                              addFireToFirebase(latLng.latitude,latLng.longitude);
+                                addFireToFirebase(latLng.latitude, latLng.longitude);
 
                             }
                         })
@@ -415,14 +413,12 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         removeFire();
     }
 
-    private void ambulance()
-    {
+    private void ambulance() {
         //Function Objective:Implement ambulance properties
         attendVictim();
     }
 
-    private void rescuer()
-    {
+    private void rescuer() {
         //Function Objective:Implement rescuer properties
 
         //Add a victim by long pressing on the victim's location
@@ -431,7 +427,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             public void onMapLongClick(LatLng latLng) {
                 //Display the layout that gives the victim health options like deceased,critical etc
                 rescuerCard.setVisibility(View.VISIBLE);
-                victimLatLng=latLng;
+                victimLatLng = latLng;
             }
         });
 
@@ -440,41 +436,38 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
-    private void centralunit()
-    {
+    private void centralunit() {
         //Function Objective:Implement central unit properties
         attendVictim();
+        makePhoneCalls();
     }
 
-    private void localunit()
-    {
+    private void localunit() {
         //Function Objective:Implement central unit properties
         centralunit();
+        makePhoneCalls();
     }
 
-    private void addFireToFirebase(double latValue,double lngValue)
-    {
+    private void addFireToFirebase(double latValue, double lngValue) {
         //Function Objective:Add a new fire to firebase
         try {
             mRootRef = FirebaseDatabase.getInstance().getReference();
             unitRef = mRootRef.child("Units");
             //Generate a random fire child in the Units ref
-            String fireId=generateFireName();
-            userRef=unitRef.child(fireId);
+            String fireId = generateFireName();
+            userRef = unitRef.child(fireId);
             userRef.child("lat").setValue(latValue);
             userRef.child("ln").setValue(lngValue);
             userRef.child("unitType").setValue("fire");
             userRef.child("status").setValue("fire");
+            userRef.child("phoneNumber").setValue("0");
 
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void drawFireCircle(LatLng latLngValue,String fireId)
-    {
+    private void drawFireCircle(LatLng latLngValue, String fireId) {
         //Function Object:Draw a red translucent area around the fire marker
         // Instantiates a new CircleOptions object and defines the center and radius
         CircleOptions circleOptions = new CircleOptions()
@@ -484,32 +477,30 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 .radius(2500); // The radius (in meters) of your geofence
 
 
-        Circle circle= mMap.addCircle(circleOptions);
+        Circle circle = mMap.addCircle(circleOptions);
         //Add only a single entry to fireAreaMap
         if (!fireAreaMap.containsKey(fireId)) {
-            fireAreaMap.put(fireId,circle);
+            fireAreaMap.put(fireId, circle);
         }
     }
 
 
-    private String generateFireName()
-    {
+    private String generateFireName() {
         //Generate a random vicitm name like VICTIM 1010,VICTIM 3168 etc
-        String victimName="FIRE ";
+        String victimName = "FIRE ";
 
         //Java Random Number Generator
         Random rand = new Random();
-        int  n = rand.nextInt(8999) + 1000;
+        int n = rand.nextInt(8999) + 1000;
         //9999 is the maximum and the 1000 is our minimum
 
         //Add the random number to the String "VICTIM"
-        victimName+=n;
+        victimName += n;
 
         return victimName;
     }
 
-    private void removeFire()
-    {
+    private void removeFire() {
 
         //Remove a Fire,thereby deleting the marker,This is done by clicking on the Fire marker
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
@@ -538,7 +529,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                                 @Override
                                 public void OnClick() {
                                     //Remove the fire Circle
-                                    Circle myCircle=fireAreaMap.get(marker.getTitle());
+                                    Circle myCircle = fireAreaMap.get(marker.getTitle());
                                     fireAreaMap.remove(marker.getTitle());
                                     myCircle.remove();
                                     //Remove the victims from everywhere
@@ -561,8 +552,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         });
     }
 
-    private void attendVictim()
-    {
+    private void attendVictim() {
         //Attend a victim,thereby deleting the marker,This is done by clicking on the victim marker
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
@@ -610,35 +600,32 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         });
     }
 
-    public void setVictim(View view)
-    {
+    public void setVictim(View view) {
         //Function Objective:Create a new victim
 
         //Below values are obtained when the user long presses on the map
-        double latValue,lngValue;
-        latValue=victimLatLng.latitude;
-        lngValue=victimLatLng.longitude;
+        double latValue, lngValue;
+        latValue = victimLatLng.latitude;
+        lngValue = victimLatLng.longitude;
 
         //Menu for which button is selected
-        switch (view.getId())
-        {
+        switch (view.getId()) {
             case R.id.deceasedButton:
-                addVictimToFireBase(latValue,lngValue,"victim","deceased");
+                addVictimToFireBase(latValue, lngValue, "victim", "deceased");
                 break;
             case R.id.criticalButton:
-                addVictimToFireBase(latValue,lngValue,"victim","critical");
+                addVictimToFireBase(latValue, lngValue, "victim", "critical");
                 break;
             case R.id.injuredButton:
-                addVictimToFireBase(latValue,lngValue,"victim","injured");
+                addVictimToFireBase(latValue, lngValue, "victim", "injured");
                 break;
             case R.id.fineButton:
-                addVictimToFireBase(latValue,lngValue,"victim","fine");
+                addVictimToFireBase(latValue, lngValue, "victim", "fine");
                 break;
         }
     }
 
-    private void deleteVictimOrFireFromFireBase(String victimName)
-    {
+    private void deleteVictimOrFireFromFireBase(String victimName) {
         //Function Objective:Remove the victim record from firebase
         mRootRef = FirebaseDatabase.getInstance().getReference();
         unitRef = mRootRef.child("Units");
@@ -647,57 +634,95 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 
-    private void addVictimToFireBase(double latValue,double lngValue,String unitTypeValue,String statusValue)
-    {
+    private void addVictimToFireBase(double latValue, double lngValue, String unitTypeValue, String statusValue) {
         //Function Objective:Add a new victim to firebase
-        try
-        {
+        try {
             mRootRef = FirebaseDatabase.getInstance().getReference();
             unitRef = mRootRef.child("Units");
             //Generate a random victim child in the Units ref
-            userRef=unitRef.child(generateVictimName());
+            userRef = unitRef.child(generateVictimName());
             userRef.child("lat").setValue(latValue);
             userRef.child("ln").setValue(lngValue);
             userRef.child("unitType").setValue(unitTypeValue);
             userRef.child("status").setValue(statusValue);
-        }
-        catch (Exception e)
-        {
+            userRef.child("phoneNumber").setValue("0");
+        } catch (Exception e) {
             e.printStackTrace();
         }
         rescuerCard.setVisibility(View.INVISIBLE);
     }
 
-    private String generateVictimName()
-    {
+    private String generateVictimName() {
         //Generate a random vicitm name like VICTIM 1010,VICTIM 3168 etc
-        String victimName="VICTIM ";
+        String victimName = "VICTIM ";
 
         //Java Random Number Generator
         Random rand = new Random();
-        int  n = rand.nextInt(8999) + 1000;
+        int n = rand.nextInt(8999) + 1000;
         //9999 is the maximum and the 1000 is our minimum
 
         //Add the random number to the String "VICTIM"
-        victimName+=n;
+        victimName += n;
 
         return victimName;
     }
 
-    public void changeStatus(View view)
-    {
+    public void changeStatus(View view) {
         //Function Objective:Change status in LocalDB & Firebase
-        if(LocalDB.getStatus().equals("available"))
-        {
+        if (LocalDB.getStatus().equals("available")) {
             LocalDB.setStatus("busy");
             statusButtonImage.setImageResource(R.drawable.busy);
-        }
-        else
-        {
+        } else {
             LocalDB.setStatus("available");
             statusButtonImage.setImageResource(R.drawable.available);
         }
-        updateFirebaseData(latitude,longitude,LocalDB.getUnitType(),LocalDB.getStatus());
+        updateFirebaseData(latitude, longitude, LocalDB.getUnitType(), LocalDB.getStatus());
+    }
+
+    private void makePhoneCalls() {
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(final Marker marker) {
+                if (!marker.getTitle().contains("VICTIM") && !marker.getTitle().contains("FIRE") && !marker.getTitle().contains(LocalDB.getFullName())) {
+                    //Only attend Victim markers
+
+                    //Give an alert to confirm the attend
+
+                    new FancyAlertDialog.Builder(MainActivity.this)
+                            .setTitle("Make the Phone Call")
+                            .setBackgroundColor(Color.parseColor("#2196F3"))  //Don't pass R.color.colorvalue
+                            .setMessage("Are you sure you want to call "+marker.getTitle())
+                            .setNegativeBtnText("No")
+                            .setPositiveBtnBackground(Color.parseColor("#1565C0"))  //Don't pass R.color.colorvalue
+                            .setPositiveBtnText("Yes")
+                            .setNegativeBtnBackground(Color.parseColor("#A9A7A8"))  //Don't pass R.color.colorvalue
+                            .setAnimation(Animation.POP)
+                            .isCancellable(true)
+                            .setIcon(R.drawable.ic_info_outline_white_48dp, Icon.Visible)
+
+                            .OnPositiveClicked(new FancyAlertDialogListener() {
+                                @Override
+                                public void OnClick() {
+                                    Intent intent = new Intent(Intent.ACTION_CALL);
+                                    intent.setData(Uri.parse("tel:"+phoneNumberMap.get(marker.getTitle())));
+                                    if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+                                        requestPermissionFromUser();
+                                        return;
+                                    }
+                                    startActivity(intent);
+                                }
+                            })
+
+                            .OnNegativeClicked(new FancyAlertDialogListener() {
+                                @Override
+                                public void OnClick() {
+                                }
+                            })
+                            .build();
+                }
+                return false;
+            }
+        });
     }
 
 }
