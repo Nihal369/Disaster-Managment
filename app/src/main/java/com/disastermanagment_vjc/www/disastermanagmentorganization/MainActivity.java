@@ -2,6 +2,7 @@ package com.disastermanagment_vjc.www.disastermanagmentorganization;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Notification;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -42,6 +43,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
+import br.com.goncalves.pugnotification.notification.PugNotification;
 import io.nlopez.smartlocation.OnLocationUpdatedListener;
 import io.nlopez.smartlocation.SmartLocation;
 import io.nlopez.smartlocation.location.config.LocationAccuracy;
@@ -132,7 +134,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                     MY_PERMISSIONS_REQUEST_CALL_PHONE);
         }
     }
-
 
     @SuppressLint("MissingPermission")
     private void getInitialLocationOfUser() {
@@ -259,6 +260,20 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                                             .icon(icon));
 
                                     usersMarkersMap.put(key, usersMarker);
+
+                                    //Display a notification when a victim is added
+                                    if(key.contains("VICTIM"))
+                                    {
+                                        PugNotification.with(MainActivity.this)
+                                                .load()
+                                                .title("New Victim")
+                                                .message("New Victim alerted at "+subMap.get("lat")+" " +subMap.get("ln"))
+                                                .smallIcon(R.drawable.victimcriticalbig)
+                                                .largeIcon(R.drawable.victimcriticalbig)
+                                                .flags(Notification.DEFAULT_ALL)
+                                                .simple()
+                                                .build();
+                                    }
                                 }
 
                                 //Draw fire circle around fire
@@ -272,6 +287,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                                     phoneNumberMap.put(key, subMap.get("phoneNumber"));
                                     Log.i("SUPERMAN", phoneNumberMap.toString());
                                 }
+
 
                             }
 
@@ -481,9 +497,19 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         //Add only a single entry to fireAreaMap
         if (!fireAreaMap.containsKey(fireId)) {
             fireAreaMap.put(fireId, circle);
+
+            //Send a notification to the user about the fire
+            PugNotification.with(MainActivity.this)
+                    .load()
+                    .title("Fire Alert")
+                    .message("New fire alerted at "+latLngValue)
+                    .smallIcon(R.drawable.fire)
+                    .largeIcon(R.drawable.fire)
+                    .flags(Notification.DEFAULT_ALL)
+                    .simple()
+                    .build();
         }
     }
-
 
     private String generateFireName() {
         //Generate a random vicitm name like VICTIM 1010,VICTIM 3168 etc
@@ -632,7 +658,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         //Delete the entire victim objects in the Units tree
         unitRef.child(victimName).removeValue();
     }
-
 
     private void addVictimToFireBase(double latValue, double lngValue, String unitTypeValue, String statusValue) {
         //Function Objective:Add a new victim to firebase
