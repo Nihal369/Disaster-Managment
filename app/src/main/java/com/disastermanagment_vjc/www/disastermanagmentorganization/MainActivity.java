@@ -9,7 +9,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v7.widget.CardView;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 
@@ -44,9 +43,10 @@ import io.nlopez.smartlocation.OnLocationUpdatedListener;
 import io.nlopez.smartlocation.SmartLocation;
 import io.nlopez.smartlocation.location.config.LocationAccuracy;
 import io.nlopez.smartlocation.location.config.LocationParams;
+
 //TODO:INTELLIGENT NOTIFICAITON SYSTEM
-//TODO:CENTRAL SUPERVISION UNIT
 //TODO:COMMUNICATE RESCUE UNITS
+
 public class MainActivity extends FragmentActivity implements OnMapReadyCallback {
 
     //Object Decelerations
@@ -325,6 +325,26 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                     }
                     break;
                 case "fire":return R.drawable.fire;
+
+                case "centralunit":
+                    if(statusValue.equals("available"))
+                    {
+                        return R.drawable.centralunitavailable;
+                    }
+                    else
+                    {
+                        return R.drawable.centralunitbusy;
+                    }
+
+                case "localunit":
+                    if(statusValue.equals("available"))
+                    {
+                        return R.drawable.localunitavailable;
+                    }
+                    else
+                    {
+                        return R.drawable.localunitbusy;
+                    }
             }
             return R.drawable.rescueravailable;
 
@@ -341,6 +361,10 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             case "ambulance":ambulance();
             break;
             case "rescuer":rescuer();
+            break;
+            case "centralunit":centralunit();
+            break;
+            case "localunit":localunit();
             break;
             default:rescuer();
         }
@@ -416,6 +440,18 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
+    private void centralunit()
+    {
+        //Function Objective:Implement central unit properties
+        attendVictim();
+    }
+
+    private void localunit()
+    {
+        //Function Objective:Implement central unit properties
+        centralunit();
+    }
+
     private void addFireToFirebase(double latValue,double lngValue)
     {
         //Function Objective:Add a new fire to firebase
@@ -471,7 +507,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
         return victimName;
     }
-
 
     private void removeFire()
     {
