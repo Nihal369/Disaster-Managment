@@ -18,6 +18,7 @@ import android.widget.ImageView;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -149,6 +150,9 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                             // Logic to handle location object
                             initalLat = location.getLatitude();
                             initalLng = location.getLongitude();
+                            //Set camera zoom to user location
+                            float zoomFactor=13.0f;//Change this variable to update zoom
+                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(initalLat, initalLng ), zoomFactor));
                         }
 
                     }
@@ -387,7 +391,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     private void firefighter() {
         //Function Objective:Implement firefighter properties
 
-        //Add a victim by long pressing on the victim's location
+        //Add a fire by long pressing on the fire location
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(final LatLng latLng) {
@@ -426,6 +430,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
         //Remove fire
         removeFire();
+
     }
 
     private void ambulance() {
@@ -453,13 +458,12 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void centralunit() {
         //Function Objective:Implement central unit properties
-        attendVictim();
         makePhoneCalls();
     }
 
     private void localunit() {
         //Function Objective:Implement central unit properties
-        centralunit();
+        attendVictim();
         makePhoneCalls();
     }
 
@@ -708,7 +712,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public boolean onMarkerClick(final Marker marker) {
                 if (!marker.getTitle().contains("VICTIM") && !marker.getTitle().contains("FIRE") && !marker.getTitle().contains(LocalDB.getFullName())) {
-                    //Only attend Victim markers
+                   //Don't make phone calls to victim and fire markers
 
                     //Give an alert to confirm the attend
 
