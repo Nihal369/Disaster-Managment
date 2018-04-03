@@ -232,10 +232,10 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                             //Eg:{lat:0,ln:0,unitType:rescuer} is split into a hashmap
                             String value = String.valueOf(fireBaseMap.get(key));
                             value = value.substring(1, value.length() - 1);           //remove curly brackets
-                            String[] keyValuePairs = value.split(",");              //split the string to create key-value pairs
+                            String[] keyValuePairs = value.split(",");          //split the string to create key-value pairs
                             Map<String, String> subMap = new HashMap<>();
 
-                            if (keyValuePairs.length == 5) {//Check if 5 parameters lat,lng,status,phoneNum and unitType are retrieved
+                            if (keyValuePairs.length == 5) {//Check if 5 parameters lat,lng,status,phoneNumber and unitType are retrieved
                                 for (String pair : keyValuePairs)                        //iterate over the pairs
                                 {
                                     String[] entry = pair.split("=");                   //split the pairs to get key and value
@@ -285,7 +285,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                                 //Store phoneNumbers of rescue units in a key value map
                                 if (!phoneNumberMap.containsKey(key)) {
                                     phoneNumberMap.put(key, subMap.get("phoneNumber"));
-                                    Log.i("SUPERMAN", phoneNumberMap.toString());
                                 }
 
 
