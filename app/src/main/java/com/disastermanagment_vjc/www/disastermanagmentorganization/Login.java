@@ -11,6 +11,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
@@ -26,6 +27,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
@@ -156,8 +159,6 @@ public class Login extends AppCompatActivity {
 
                     //Get details from firebase like unitType which is not present in Google Account
                     readDataFromFirebase();
-
-
                 }
             }
         };
@@ -201,14 +202,14 @@ public class Login extends AppCompatActivity {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
 
-                //Map that stores retrived data from the DataSnapshot
+                //Map that stores retrieved data from the DataSnapshot
                 if(dataSnapshot!=null) {
                     fireBaseMap = (HashMap<String, String>) dataSnapshot.getValue();
                 }
 
 
                 if(fireBaseMap!=null) {
-                    //Retrive data from the snapshot map
+                    //Retrieve data from the snapshot map
                     for (String key : fireBaseMap.keySet()) {
 
                         switch (key)
@@ -250,7 +251,6 @@ public class Login extends AppCompatActivity {
         finish();
     }
 
-
     private void signIn() {
         //Function Objective:The Google Sign In UI is called by this function
         Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
@@ -284,7 +284,7 @@ public class Login extends AppCompatActivity {
         //Function Objective:Get the google account credentials like email and password to log in separately to Firebase
         AuthCredential credential = GoogleAuthProvider.getCredential(account.getIdToken(), null);
 
-        //Sign into firebase with the recieved credentials
+        //Sign into firebase with the received credentials
         firebaseAuth.signInWithCredential(credential)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
@@ -294,16 +294,16 @@ public class Login extends AppCompatActivity {
                             FirebaseUser user = firebaseAuth.getCurrentUser();
 
 
-                            Toasty.success(Login.this, "Success", Toast.LENGTH_SHORT).show();
+                            Toasty.success(Login.this, "Login Success", Toast.LENGTH_SHORT).show();
 
                             //Retrieve google account data and store it in LocalDB
                             assert user != null;
 
+                            //Read data from firebase
                             assignDetailsToLocalDB(user);
 
-
-                            //Read data from firebase and move to MainActivity
-                            readDataFromFirebase();
+                            //Check if user is registered with the database
+                            checkIfUserIsRegisteredWithFirebase();
                         }
                         else {
                             // If sign in fails, display a message to the user.
@@ -314,6 +314,30 @@ public class Login extends AppCompatActivity {
                 });
     }
 
+    private void checkIfUserIsRegisteredWithFirebase(){
+        //Check if user exists,Read data only if the user exists
+        userRef = unitRef.child(LocalDB.getFullName());
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if(dataSnapshot.exists())
+                {
+                    //Read data from firebase and move to MainActivity
+                    readDataFromFirebase();
+                }
+
+                else
+                {
+                    Toasty.error(Login.this, "Unregistered User", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
 
     private boolean isNetworkAvailable() {
         //Function Objective: check whether Internet is available
@@ -327,8 +351,7 @@ public class Login extends AppCompatActivity {
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
-    private void getDataBaseReference()
-    {
+    private void getDataBaseReference() {
         //Function Objective:Create a reference to access the firebase database
         mRootRef = FirebaseDatabase.getInstance().getReference();
         unitRef = mRootRef.child("Units");
@@ -343,5 +366,4 @@ public class Login extends AppCompatActivity {
                     MY_PERMISSIONS_REQUEST_FINE_LOCATION);
         }
     }
-
 }
