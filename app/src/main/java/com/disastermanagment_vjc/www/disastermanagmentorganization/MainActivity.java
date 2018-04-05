@@ -278,11 +278,14 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                                                 .simple()
                                                 .build();
                                     }
+
+
                                 }
 
                                 //Draw fire circle around fire
                                 if (subMap.get("unitType").equals("fire")) {
                                     drawFireCircle(new LatLng(Double.parseDouble(subMap.get("lat")), Double.parseDouble(subMap.get("ln"))), key);
+                                    Log.i("FIRE XXX",fireAreaMap.toString());
                                 }
 
 
@@ -491,17 +494,18 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         // Instantiates a new CircleOptions object and defines the center and radius
         CircleOptions circleOptions = new CircleOptions()
                 .strokeColor(Color.RED) //Outer black border
-                .fillColor(Color.argb(64, 255, 0, 0)) //inside of the geofence will be transparent, change to whatever color you prefer like 0x88ff0000 for mid-transparent red
+                .fillColor(Color.argb(64, 255, 0, 0))
                 .center(latLngValue) // the LatLng Object of your geofence location
                 .radius(2500); // The radius (in meters) of your geofence
 
 
-        Circle circle = mMap.addCircle(circleOptions);
+
         //Add only a single entry to fireAreaMap
         if (!fireAreaMap.containsKey(fireId)) {
+            Circle circle = mMap.addCircle(circleOptions);
             fireAreaMap.put(fireId, circle);
 
-            //Send a notification to the user about the fire
+            //Send a notification to users about the fire
             PugNotification.with(MainActivity.this)
                     .load()
                     .title("Fire Alert")
@@ -512,6 +516,8 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                     .simple()
                     .build();
         }
+
+        Log.i("FIRE-0",fireAreaMap.toString());
     }
 
     private String generateFireName() {
@@ -559,8 +565,10 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                                 public void OnClick() {
                                     //Remove the fire Circle
                                     Circle myCircle = fireAreaMap.get(marker.getTitle());
+                                    Log.i("FIRE-1",fireAreaMap.toString());
                                     fireAreaMap.remove(marker.getTitle());
                                     myCircle.remove();
+                                    Log.i("FIRE-2",myCircle.toString());
                                     //Remove the victims from everywhere
                                     deleteVictimOrFireFromFireBase(marker.getTitle());
                                     usersMarkersMap.remove(marker.getTitle());
@@ -572,6 +580,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                             .OnNegativeClicked(new FancyAlertDialogListener() {
                                 @Override
                                 public void OnClick() {
+                                    Log.i("FIRE-NEGATIVE",fireAreaMap.toString());
                                 }
                             })
                             .build();
