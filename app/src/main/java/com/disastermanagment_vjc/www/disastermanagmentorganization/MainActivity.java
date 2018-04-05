@@ -266,17 +266,23 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                                     usersMarkersMap.put(key, usersMarker);
 
                                     //Display a notification when a victim is added
-                                    if(key.contains("VICTIM"))
-                                    {
-                                        PugNotification.with(MainActivity.this)
-                                                .load()
-                                                .title("New Victim")
-                                                .message("New Victim alerted at "+subMap.get("lat")+" " +subMap.get("ln"))
-                                                .smallIcon(R.drawable.victimcriticalbig)
-                                                .largeIcon(R.drawable.victimcriticalbig)
-                                                .flags(Notification.DEFAULT_ALL)
-                                                .simple()
-                                                .build();
+                                    if(key.contains("VICTIM")) {
+                                        //Get latitude and longitude of victim
+                                        double victimLatitude = Double.parseDouble(subMap.get("lat"));
+                                        double victimLongitude = Double.parseDouble(subMap.get("ln"));
+
+                                        //Check if the unit is not firefighter and is within the distance of 0.5 longitude and latitude
+                                        if ((Math.abs(victimLatitude - latitude) <= 0.5) && (Math.abs(victimLongitude - longitude) <= 0.5) && !LocalDB.getUnitType().equals("firefighter")) {
+                                            PugNotification.with(MainActivity.this)
+                                                    .load()
+                                                    .title("New Victim")
+                                                    .message("New Victim alerted at " + subMap.get("lat") + " " + subMap.get("ln"))
+                                                    .smallIcon(R.drawable.victimcriticalbig)
+                                                    .largeIcon(R.drawable.victimcriticalbig)
+                                                    .flags(Notification.DEFAULT_ALL)
+                                                    .simple()
+                                                    .build();
+                                        }
                                     }
 
 
@@ -506,15 +512,20 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             fireAreaMap.put(fireId, circle);
 
             //Send a notification to users about the fire
-            PugNotification.with(MainActivity.this)
-                    .load()
-                    .title("Fire Alert")
-                    .message("New fire alerted at "+latLngValue)
-                    .smallIcon(R.drawable.fire)
-                    .largeIcon(R.drawable.fire)
-                    .flags(Notification.DEFAULT_ALL)
-                    .simple()
-                    .build();
+            double fireLat = latLngValue.latitude;
+            double fireLng = latLngValue.longitude;
+            //Check if user is near the fire
+            if ((Math.abs(fireLat - latitude) <= 0.5) && (Math.abs(fireLng - longitude) <= 0.5)) {
+                PugNotification.with(MainActivity.this)
+                        .load()
+                        .title("Fire Alert")
+                        .message("New fire alerted at " + latLngValue)
+                        .smallIcon(R.drawable.fire)
+                        .largeIcon(R.drawable.fire)
+                        .flags(Notification.DEFAULT_ALL)
+                        .simple()
+                        .build();
+            }
         }
 
         Log.i("FIRE-0",fireAreaMap.toString());
@@ -760,6 +771,13 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 return false;
             }
         });
+    }
+
+    public void displayUserLocation(View view)
+    {
+        //Set camera zoom to user location
+        float zoomFactor=13.0f;//Change this variable to update zoom
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude ), zoomFactor));
     }
 
 }
