@@ -158,14 +158,13 @@
     </android.support.v7.widget.CardView>
 
 
-
     <ImageView
         android:id="@+id/statusImageView"
         android:layout_width="60dp"
         android:layout_height="60dp"
-        android:layout_alignEnd="@+id/rescuerCard"
         android:layout_alignParentBottom="true"
-        android:layout_marginBottom="83dp"
+        android:layout_alignStart="@+id/rescuerCard"
+        android:layout_marginBottom="64dp"
         android:onClick="changeStatus"
         android:src="@drawable/available" />
 
@@ -174,7 +173,7 @@
         android:layout_height="60dp"
         android:layout_alignEnd="@+id/rescuerCard"
         android:layout_alignParentBottom="true"
-        android:layout_marginBottom="11dp"
+        android:layout_marginBottom="64dp"
         android:onClick="displayUserLocation"
         android:src="@drawable/gpsicon" />
 
