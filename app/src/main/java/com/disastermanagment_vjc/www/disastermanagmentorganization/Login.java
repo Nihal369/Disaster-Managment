@@ -355,7 +355,7 @@ public class Login extends AppCompatActivity {
         //Function Objective:Create a reference to access the firebase database
         mRootRef = FirebaseDatabase.getInstance().getReference();
         unitRef = mRootRef.child("Units");
-        userRef=unitRef.child(LocalDB.getFullName());
+        userRef=unitRef.child(LocalDB.getEmailAddress());
     }
 
     private void requestPermissionFromUser(){

@@ -2,6 +2,8 @@ package com.disastermanagment_vjc.www.disastermanagmentorganization;
 
 import android.net.Uri;
 
+import org.apache.commons.lang3.StringUtils;
+
 
 public class LocalDB {
 
@@ -10,6 +12,9 @@ public class LocalDB {
 
 
     public static void setEmailAddress(String value) {
+        value=value.toLowerCase();
+        //Firebase does'nt accept special characters
+        value= value.replaceAll("[-+.^:,@!#$%&*()_]","");
         emailAddress=value;
     }
 

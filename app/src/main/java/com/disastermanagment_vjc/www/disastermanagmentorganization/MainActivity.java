@@ -210,7 +210,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         //Function Objective:Create the firebase reference
         mRootRef = FirebaseDatabase.getInstance().getReference();
         unitRef = mRootRef.child("Units");
-        userRef = unitRef.child(LocalDB.getFullName());
+        userRef = unitRef.child(LocalDB.getEmailAddress());
     }
 
     private void readDataFromFirebase() {
