@@ -59,6 +59,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     private FusedLocationProviderClient mFusedLocationClient;
     private int MY_PERMISSIONS_REQUEST_FINE_LOCATION,MY_PERMISSIONS_REQUEST_CALL_PHONE;
     private double initalLat, initalLng, latitude, longitude;
+    private float zoomFactor;
     private DatabaseReference mRootRef, unitRef, userRef;
     Map<String, String> fireBaseMap;
     Map<String, Marker> usersMarkersMap;
@@ -77,6 +78,8 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         usersMarkersMap = new HashMap<>();
         fireAreaMap = new HashMap<>();
         phoneNumberMap = new HashMap<>();
+        //Edit this value to adjust zooming in to the user marker
+        zoomFactor=16.0f;
 
         rescuerCard = findViewById(R.id.rescuerCard);
         statusButtonImage = findViewById(R.id.statusImageView);
@@ -151,7 +154,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                             initalLat = location.getLatitude();
                             initalLng = location.getLongitude();
                             //Set camera zoom to user location
-                            float zoomFactor=13.0f;//Change this variable to update zoom
                             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(initalLat, initalLng ), zoomFactor));
                         }
 
@@ -775,8 +777,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
     public void displayUserLocation(View view)
     {
-        //Set camera zoom to user location
-        float zoomFactor=13.0f;//Change this variable to update zoom
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude ), zoomFactor));
     }
 
