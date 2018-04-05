@@ -241,7 +241,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                             String[] keyValuePairs = value.split(",");          //split the string to create key-value pairs
                             Map<String, String> subMap = new HashMap<>();
 
-                            if (keyValuePairs.length == 5) {//Check if 5 parameters lat,lng,status,phoneNumber and unitType are retrieved
+                            if (keyValuePairs.length == 6) {//Check if 6 parameters lat,lng,status,phoneNumber,name and unitType are retrieved
                                 for (String pair : keyValuePairs)                        //iterate over the pairs
                                 {
                                     String[] entry = pair.split("=");                   //split the pairs to get key and value
@@ -262,7 +262,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                                     BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(getIconPathFromDrawable(subMap.get("unitType"), subMap.get("status")));
                                     Marker usersMarker = mMap.addMarker(new MarkerOptions()
                                             .position(new LatLng(Double.parseDouble(subMap.get("lat")), Double.parseDouble(subMap.get("ln"))))
-                                            .title(key)
+                                            .title(subMap.get("name"))
                                             .icon(icon));
 
                                     usersMarkersMap.put(key, usersMarker);
@@ -293,7 +293,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                                 //Draw fire circle around fire
                                 if (subMap.get("unitType").equals("fire")) {
                                     drawFireCircle(new LatLng(Double.parseDouble(subMap.get("lat")), Double.parseDouble(subMap.get("ln"))), key);
-                                    Log.i("FIRE XXX",fireAreaMap.toString());
                                 }
 
 
