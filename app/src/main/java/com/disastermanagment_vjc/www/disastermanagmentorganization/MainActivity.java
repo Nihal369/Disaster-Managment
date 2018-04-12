@@ -12,10 +12,8 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v7.widget.CardView;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
-
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -39,27 +37,25 @@ import com.shashank.sony.fancydialoglib.Animation;
 import com.shashank.sony.fancydialoglib.FancyAlertDialog;
 import com.shashank.sony.fancydialoglib.FancyAlertDialogListener;
 import com.shashank.sony.fancydialoglib.Icon;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
-
 import br.com.goncalves.pugnotification.notification.PugNotification;
 import io.nlopez.smartlocation.OnLocationUpdatedListener;
 import io.nlopez.smartlocation.SmartLocation;
 import io.nlopez.smartlocation.location.config.LocationAccuracy;
 import io.nlopez.smartlocation.location.config.LocationParams;
 
-//TODO:INTELLIGENT NOTIFICAITON SYSTEM
-
 public class MainActivity extends FragmentActivity implements OnMapReadyCallback {
 
     //Object Decelerations
     private GoogleMap mMap;
     private FusedLocationProviderClient mFusedLocationClient;
+
     private int MY_PERMISSIONS_REQUEST_FINE_LOCATION,MY_PERMISSIONS_REQUEST_CALL_PHONE;
     private double initalLat, initalLng, latitude, longitude;
     private float zoomFactor;
+
     private DatabaseReference mRootRef, unitRef, userRef;
     Map<String, String> fireBaseMap;
     Map<String, Marker> usersMarkersMap;
@@ -70,19 +66,25 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     Map<String, String> phoneNumberMap;
 
     @Override
+    //OnCreate is called when the activity is opened
     protected void onCreate(Bundle savedInstanceState) {
         //Function Objective:Load the layout and set initial things
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         requestPermissionFromUser();
+
         usersMarkersMap = new HashMap<>();
         fireAreaMap = new HashMap<>();
         phoneNumberMap = new HashMap<>();
+
         //Edit this value to adjust zooming in to the user marker
         zoomFactor=16.0f;
 
         rescuerCard = findViewById(R.id.rescuerCard);
         statusButtonImage = findViewById(R.id.statusImageView);
+
+        //Set the status button to available or busy
         if (LocalDB.getStatus().equals("available")) {
             statusButtonImage.setImageResource(R.drawable.available);
         } else {
@@ -98,6 +100,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
     @SuppressLint("MissingPermission")
     @Override
+    //Called when the map is loaded
     public void onMapReady(GoogleMap googleMap) {
         //Function Objective:Display the Map with the app features
         //Assign the Google Map to an Object so that we can use it in program
@@ -126,6 +129,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void requestPermissionFromUser() {
         //Function Objective:Request location permission from the user
+
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
@@ -208,8 +212,14 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void getFirebaseReference() {
         //Function Objective:Create the firebase reference
+
+        //Main Reference
         mRootRef = FirebaseDatabase.getInstance().getReference();
+
+        //Get subtree with root "Units
         unitRef = mRootRef.child("Units");
+
+        //In Units subtree find the subtree with the user's email address
         userRef = unitRef.child(LocalDB.getEmailAddress());
     }
 
@@ -217,6 +227,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         //Function Objective:Reads the data like unitType from firebase
         getFirebaseReference();
 
+        //Read data from the UnitRef(Email id) reference
         unitRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -256,7 +267,8 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                                     BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(getIconPathFromDrawable(subMap.get("unitType"), subMap.get("status")));
                                     marker.setIcon(icon);//Update icon if necessary
 
-                                } else {
+                                }
+                                else {
                                     //If the marker for a user doesnt exist,we need to create a new one
                                     //We cant directly give an image as a marker,we need to convert it into a bitmap icon.
                                     BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(getIconPathFromDrawable(subMap.get("unitType"), subMap.get("status")));
@@ -353,6 +365,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                         return R.drawable.victimfine;
                 }
                 break;
+
             case "fire":
                 return R.drawable.fire;
 
@@ -377,6 +390,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     private void implementUnitType() {
         //Function Objective:Implement user's unitType functions
         //Example:If the signed in user is a firefighter,implement firefighter properties only
+
         switch (LocalDB.getUnitType()) {
             case "firefighter":
                 firefighter();
@@ -463,7 +477,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
         //Attend a victim
         attendVictim();
-
     }
 
     private void centralunit() {
@@ -473,7 +486,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void localunit() {
         //Function Objective:Implement central unit properties
-        attendVictim();
         makePhoneCalls();
     }
 
@@ -482,6 +494,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         try {
             mRootRef = FirebaseDatabase.getInstance().getReference();
             unitRef = mRootRef.child("Units");
+
             //Generate a random fire child in the Units ref
             String fireId = generateFireName();
             userRef = unitRef.child(fireId);
@@ -505,8 +518,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 .center(latLngValue) // the LatLng Object of your geofence location
                 .radius(2500); // The radius (in meters) of your geofence
 
-
-
         //Add only a single entry to fireAreaMap
         if (!fireAreaMap.containsKey(fireId)) {
             Circle circle = mMap.addCircle(circleOptions);
@@ -528,13 +539,11 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                         .build();
             }
         }
-
-        Log.i("FIRE-0",fireAreaMap.toString());
     }
 
     private String generateFireName() {
-        //Generate a random vicitm name like VICTIM 1010,VICTIM 3168 etc
-        String victimName = "FIRE ";
+        //Function Objective:Generate a random fire name like fire1010,fire3168 etc
+        String fireName = "FIRE ";
 
         //Java Random Number Generator
         Random rand = new Random();
@@ -542,24 +551,22 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         //9999 is the maximum and the 1000 is our minimum
 
         //Add the random number to the String "VICTIM"
-        victimName += n;
+        fireName += n;
 
-        return victimName;
+        return fireName;
     }
 
     private void removeFire() {
 
-        //Remove a Fire,thereby deleting the marker,This is done by clicking on the Fire marker
+        //Function Objective:Remove a Fire,thereby deleting the marker,This is done by clicking on the Fire marker
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(final Marker marker) {
 
 
-                if (marker.getTitle().contains("FIRE")) {
-                    //Only remove FIRE markers
+                if (marker.getTitle().contains("FIRE")) {//Only remove FIRE markers
 
                     //Give an alert to confirm the removal
-
                     new FancyAlertDialog.Builder(MainActivity.this)
                             .setTitle("Remove Fire")
                             .setBackgroundColor(Color.parseColor("#F39C12"))  //Don't pass R.color.colorvalue
@@ -577,10 +584,8 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                                 public void OnClick() {
                                     //Remove the fire Circle
                                     Circle myCircle = fireAreaMap.get(marker.getTitle());
-                                    Log.i("FIRE-1",fireAreaMap.toString());
                                     fireAreaMap.remove(marker.getTitle());
                                     myCircle.remove();
-                                    Log.i("FIRE-2",myCircle.toString());
                                     //Remove the victims from everywhere
                                     deleteVictimOrFireFromFireBase(marker.getTitle());
                                     usersMarkersMap.remove(marker.getTitle());
@@ -592,7 +597,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                             .OnNegativeClicked(new FancyAlertDialogListener() {
                                 @Override
                                 public void OnClick() {
-                                    Log.i("FIRE-NEGATIVE",fireAreaMap.toString());
+
                                 }
                             })
                             .build();
@@ -603,14 +608,15 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void attendVictim() {
-        //Attend a victim,thereby deleting the marker,This is done by clicking on the victim marker
+        //Function Objective:Attend a victim,thereby deleting the marker,This is done by clicking on the victim marker
+
+        //Set a marker click listener
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(final Marker marker) {
 
 
-                if (marker.getTitle().contains("VICTIM")) {
-                    //Only attend Victim markers
+                if (marker.getTitle().contains("VICTIM")) {//Only attend Victim markers
 
                     //Give an alert to confirm the attend
 
@@ -717,7 +723,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     public void changeStatus(View view) {
-        //Function Objective:Change status in LocalDB & Firebase
+        //Function Objective:Change status to available or busy by complimenting current status in LocalDB & Firebase
         if (LocalDB.getStatus().equals("available")) {
             LocalDB.setStatus("busy");
             statusButtonImage.setImageResource(R.drawable.busy);
@@ -729,11 +735,14 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void makePhoneCalls() {
+        //Function Objective:Make phone calls to the marker clicked
+
+        //Set a marker click listener
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(final Marker marker) {
                 if (!marker.getTitle().contains("VICTIM") && !marker.getTitle().contains("FIRE") && !marker.getTitle().contains(LocalDB.getFullName())) {
-                   //Don't make phone calls to victim and fire markers
+                   //Don't make phone calls to victim ,fire markers and to self
 
                     //Give an alert to confirm the attend
 
@@ -776,6 +785,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
     public void displayUserLocation(View view)
     {
+        //Function Objective:Shows user location on map when this function is called by clicking the button in the app
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude ), zoomFactor));
     }
 

@@ -1,25 +1,20 @@
 package com.disastermanagment_vjc.www.disastermanagmentorganization;
 
-import android.*;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
 import android.widget.Toast;
-
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -27,8 +22,6 @@ import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
@@ -61,12 +54,11 @@ public class Login extends AppCompatActivity {
     FirebaseAuth.AuthStateListener mAuthListener;
     private DatabaseReference mRootRef,unitRef,userRef;
     Map<String, String> fireBaseMap;
-    int MY_PERMISSIONS_REQUEST_FINE_LOCATION;
+    int MY_PERMISSIONS_REQUEST_FINE_LOCATION,flag;
+
+    //UI Elements
     RelativeLayout splashLayout;
     ImageView loadingSpinnerImage;
-    int flag;
-
-
 
     //OnStart Function is created when the application is launched
     @Override
@@ -96,6 +88,7 @@ public class Login extends AppCompatActivity {
         setContentView(R.layout.activity_login);
 
         requestPermissionFromUser();
+
         if (isNetworkAvailable()) {
             //Assign the buttons and text in the layout to an Object in the program
             googleSignInButton = findViewById(R.id.googleSignInButton);
@@ -122,6 +115,7 @@ public class Login extends AppCompatActivity {
         {
             Toasty.warning(Login.this,"Please Check Your Internet Connection and Try Again",Toast.LENGTH_SHORT).show();
         }
+
     }
 
     private void checkIfUserHasAlreadyLoggedIn()
@@ -315,8 +309,12 @@ public class Login extends AppCompatActivity {
     }
 
     private void checkIfUserIsRegisteredWithFirebase(){
-        //Check if user exists,Read data only if the user exists
+        //FunctionObjective:Check if user exists,Read data only if the user exists
+
+        //Get the subtree in firebase corresponding to the user's name
         userRef = unitRef.child(LocalDB.getFullName());
+
+        //Check if the subtree exists,If it does not exist the user doesnt exist
         userRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
